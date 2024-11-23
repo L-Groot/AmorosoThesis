@@ -1,5 +1,5 @@
-source("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/heads/main/plot_amoroso.R")
-source("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/heads/main/estimate_amoroso.R")
+source("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/heads/main/plot_amoroso.R")
+source("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/heads/main/estimate_amoroso.R")
 
 # plot_amoroso()
 xx <- seq(-4, 9, by=0.01)

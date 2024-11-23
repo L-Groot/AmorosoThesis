@@ -4,11 +4,11 @@
 
 # -> for estimating Amoroso
 require(AmoRosoDistrib)
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/",
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
 
 # -> for estimating Bernstein
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/",
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_bernstein.R"))
 
 # -> for estimating adjusted KDE

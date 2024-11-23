@@ -1,5 +1,5 @@
 # Source basis function for estimating Bernstein from Turnbull & Ghosh (2014)
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/",
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/umdz_Rfunction.R"))
 
 #-------------------------------------------------------------------------------

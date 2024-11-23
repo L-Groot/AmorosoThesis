@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------- 
 ### Functions and packages
 
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoDensity/refs/",
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso_np.R"))
 
 require(AmoRosoDistrib)
