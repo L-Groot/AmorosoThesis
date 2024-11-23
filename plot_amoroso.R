@@ -66,7 +66,7 @@ plot_amoroso <- function(x_vals, a, l, c, mu,
                    "\u2113=", l, ", ",
                    "c=", c, ", ",
                    "μ=", mu,
-                   ")",
+                   ")"
                   ),
             font = 3, cex.main = cex.main
             )
