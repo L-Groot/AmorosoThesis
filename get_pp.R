@@ -1,13 +1,14 @@
 #-------------------------------------------------------------------------------
 #------------------------------------------------------------------------------- 
-### Functions and packages
-
+# Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso_np.R"))
 
+# Load packages
 require(AmoRosoDistrib)
 require(caret)
 require(tidyverse)
+
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------

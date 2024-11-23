@@ -1,6 +1,10 @@
-# Amoroso PDF
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------# Amoroso PDF
 
-# --> equivalent to dgg4()!
+# The Amoroso PDF defined from scratch!
+
+# --> just for fun :)
+# --> equivalent to dgg4()! from the 'AmoRosoDistrib' package
 
 dAmoroso <- function(x, a, l, c, mu) {
   c1 <- 1/(gamma(l))

@@ -1,23 +1,26 @@
-#----------------------------
-# Load packages and functions
-#----------------------------
-
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Source functions
 # -> for estimating Amoroso
-require(AmoRosoDistrib)
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
-
 # -> for estimating Bernstein
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_bernstein.R"))
 
-# -> for estimating adjusted KDE
-require(scdensity)
+# Load packages
+require(AmoRosoDistrib)
+# -> for Amoroso density function
+require(scdensity) 
+# -> for adjusted KDE
 
 
-#----------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Function that can handle errors in estimation
-#----------------------------------------------
+
+# -> if result of Amoroso remains undefines
+
 
 safe_execute <- function(expr, object_name, data_vector) {
   tryCatch(
