@@ -1,12 +1,20 @@
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso_np.R"))
 
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
 
+# Load packages
 require(tidyverse)
 
-# List of parameter sets
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+### List of parameter sets
 parsets <- list(
   # -> taken from proposal appendix
   # -> but removed any distributions that are not unimodal (exponential)
@@ -69,10 +77,10 @@ parsets <- list(
        c(1,2,1,4), c(1,2,1,5))
 )
 
-# Sample sizes
+### Sample sizes
 nvec <- c(50, 75, 100, 150)
 
-# Loop through different sample sizes and Amoroso parameter sets
+### Loop through different sample sizes and Amoroso parameter sets
 for (n in nvec) {
   
   # Initialize an empty tibble for each sample size
