@@ -44,8 +44,8 @@ estimate_amoroso_np <- function(dat = NULL,
                                 plot = TRUE, hist = TRUE, breaks = 20,
                                 minimal = FALSE,
                                 plot_common_x = TRUE,
-                                main = NULL, generatedbynormal = FALSE,
-                                withmean = 0, withsd = 1,
+                                main = NULL,
+                                generatingnormal = NULL, # supply (mean,sd)
                                 amorosocrit = "ML", xticks = NULL
 ) {
   
@@ -263,8 +263,10 @@ estimate_amoroso_np <- function(dat = NULL,
           }
           
           # Optional: add data-generating normal distribution
-          if (generatedbynormal == TRUE) {
-            lines(x_range, dnorm(x_range, mean = withmean, sd = withsd), 
+          if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+            lines(x_range, dnorm(x_range,
+                                 mean = generatingnormal[1],
+                                 sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
           }
           
@@ -330,8 +332,10 @@ estimate_amoroso_np <- function(dat = NULL,
           }
           
           # Optional: add data-generating normal distribution
-          if (generatedbynormal == TRUE) {
-            lines(x_range, dnorm(x_range, mean = withmean, sd = withsd), 
+          if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+            lines(x_range, dnorm(x_range,
+                                 mean = generatingnormal[1],
+                                 sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
           }
           
