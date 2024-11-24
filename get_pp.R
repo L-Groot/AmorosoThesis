@@ -23,16 +23,13 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 ) 
   
-  # parset <- c(-4,1,-0.9,0)
-  # n <- 25
-  # dat <- rgg4(n, parset[1], parset[2], parset[3], parset[4])
-  # dat <- rgg4(40, a=4, l=1, c=7, mu=0)
-  # (dat <- rgg4(25, a=-1, l=2, c=2, mu=10))
-  # method = "k-fold"
-  # generating_amoroso = NULL
-  # k = 5
-  # prop_train = 0.8
-  # seed = 125
+  set.seed(93)
+  dat <- rnorm(50, mean = 30, sd = 7)
+  method = "split-half"
+  generating_amoroso = NULL
+  k = 5
+  prop_train = 0.8
+  seed = 125
   
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -392,7 +389,7 @@ get_pp <- function(
     pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res)
     
     # Get interpolated Amoroso density values
-    res <- res$modlist_interp
+    res <- res$modlist_valid_interp
     
     # Make a list to store continuous functions for the non-parametric fits
     npfun_list <- list(rdens = NULL,
@@ -401,6 +398,7 @@ get_pp <- function(
                        scKDE_uni = NULL,
                        scKDE_2inf = NULL,
                        scKDE_2infplus = NULL)
+    
     # Use splinefun() to make a continuous function from the NP estimates
     for (i in 1:length(npfun_list)) { #the first 6 fits in res are the np fits
       if (length(res[[i]]) > 1) { #if the fit is valid, estimate function
