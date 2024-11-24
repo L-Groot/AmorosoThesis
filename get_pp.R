@@ -23,13 +23,13 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 ) 
   
-  set.seed(93)
-  dat <- rnorm(50, mean = 30, sd = 7)
-  method = "split-half"
-  generating_amoroso = NULL
-  k = 5
-  prop_train = 0.8
-  seed = 125
+  # set.seed(93)
+  # dat <- rnorm(50, mean = 30, sd = 7)
+  # method = "split-half"
+  # generating_amoroso = NULL
+  # k = 5
+  # prop_train = 0.8
+  # seed = 125
   
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
