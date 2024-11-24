@@ -441,8 +441,6 @@ get_pp <- function(
     # Remove models that have NA predictions
     pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
     
-    print(names(pred_list)) 
-    
     #----------------------------------------------------------
     # For each model, calculate likelihood of test observations
     #----------------------------------------------------------
@@ -483,8 +481,6 @@ get_pp <- function(
       logL_testset = logL_vec_testset,
       medL_testset = medL_vec_testset
     )
-    
-    print(likelihood_tib)
 
     # Express log-likelihood as proportions
     if(add_prop == TRUE) {
