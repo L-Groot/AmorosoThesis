@@ -68,19 +68,29 @@ estimate_amoroso_np <- function(dat = NULL,
   n <- length(dat)
   
   #### Amoroso ####
-  amo <- safe_execute(quote(estimate_amoroso(dat, plot=0, criterion="ML")), "amo", dat)
+  amo <- safe_execute(quote(
+    estimate_amoroso(dat, plot=0, criterion="ML")), "amo", dat)
   
   #### Bernstein ####
-  bern1 <- safe_execute(quote(estimate_bernstein(dat, bound_type = "sd")), "bern1", dat)
-  bern2 <- safe_execute(quote(estimate_bernstein(dat, bound_type = "Carv")), "bern2", dat)
+  bern1 <- safe_execute(quote(
+    estimate_bernstein(dat, bound_type = "sd")), "bern1", dat)
+  
+  bern2 <- safe_execute(quote(
+    estimate_bernstein(dat, bound_type = "Carv")), "bern2", dat)
   
   #### Adjusted KDE ####
-  scKDE_2infplus <- safe_execute(quote(scdensity(dat, constraint = "twoInflections+")), "scKDE_2infplus", dat)
-  scKDE_2inf <- safe_execute(quote(scdensity(dat, constraint = "twoInflections")), "scKDE_2inf", dat)
-  scKDE_uni <- safe_execute(quote(scdensity(dat, constraint = "unimodal")), "scKDE_uni", dat)
+  scKDE_2infplus <- safe_execute(quote(
+    scdensity(dat, constraint = "twoInflections+")), "scKDE_2infplus", dat)
+  
+  scKDE_2inf <- safe_execute(quote(
+    scdensity(dat, constraint = "twoInflections")), "scKDE_2inf", dat)
+  
+  scKDE_uni <- safe_execute(quote(
+    scdensity(dat, constraint = "unimodal")), "scKDE_uni", dat)
   
   ##### R density ####
-  rdens <- safe_execute(quote(density(dat)), "rdens", dat)
+  rdens <- safe_execute(quote(
+    density(dat)), "rdens", dat)
   
   
   ############################
@@ -99,7 +109,8 @@ estimate_amoroso_np <- function(dat = NULL,
       name_id <- paste0(model$method_ID, " (", model$space, ")")
       density_values <- dgg4(amo$x, pars[1], pars[2], pars[3], pars[4])
       density_values[is.na(density_values)] <- 0
-      return(list(x = amo$x, y = density_values, pars = pars, method = name, method_short = name_id))
+      return(list(x = amo$x, y = density_values, pars = pars, method = name,
+                  method_short = name_id))
     } else {
       warning(paste(method_id, "Amoroso absent"))
       return(NULL)
@@ -150,14 +161,15 @@ estimate_amoroso_np <- function(dat = NULL,
   x_range <- seq(xmin, xmax, length.out = 512)
   
   # Get ymin and ymax across all valid models
-  ymaxes <- sort(sapply(modlist_valid, function(mod) max(mod$y)), decreasing = TRUE)
+  ymaxes <- sort(sapply(modlist_valid, function(mod) max(mod$y)),
+                 decreasing = TRUE)
   
   # If any of the valid models has a spike in the density estimate, cut off the
   # plot so that they y range stays reasonable enough to see the other fits
   if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
     ymax <- max(dat)
     #ymax <- ymaxes[2]
-    warning("One or more density estimate(s) has spike which was cut off in the plots")
+    warning("At least one density estimate has a spike which was cut off in the plots")
   } else {
    ymax <- ymaxes[1]
   }
@@ -197,12 +209,12 @@ estimate_amoroso_np <- function(dat = NULL,
     # Make Amoroso titles
     amo_mle_title <- paste0("Amoroso", " (", amo_mle$method_short, ")")
     if(!is.null(amo_hell_cdf)) {
-      amo_hell_cdf_title <- paste0("Amoroso", " (", amo_hell_cdf$method_short, ")")
+      amo_hell_cdf_title <- paste0("Amoroso"," (",amo_hell_cdf$method_short, ")")
     } else {
       amo_hell_cdf_title <- ""
     }
     if(!is.null(amo_hell_pdf)) {
-      amo_hell_pdf_title <- paste0("Amoroso", " (", amo_hell_pdf$method_short, ")")  
+      amo_hell_pdf_title <- paste0("Amoroso"," (",amo_hell_pdf$method_short, ")")  
     } else {
       amo_hell_pdf_title <- ""
     }
@@ -315,9 +327,12 @@ estimate_amoroso_np <- function(dat = NULL,
           plot(NA, xlim = c(xmin, xmax), ylim = c(0.0,ymax), type = "l",
                lwd = 1, lty = 2, main = "",
                axes = F, xlab="", ylab ="")
+          
+          # Optional: Add custom x axis ticks
           ifelse(is.null(xticks),
                  axis(1),
                  axis(1, at = xticks, labels = xticks))
+          
           rug(dat, col = "dodgerblue3", lwd = 1)
           mtext(titlevec[i], side=3, font=2, cex=1.5, line=1)
           
