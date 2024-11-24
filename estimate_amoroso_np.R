@@ -155,7 +155,7 @@ estimate_amoroso_np <- function(dat = NULL,
   # If any of the valid models has a spike in the density estimate, cut off the
   # plot so that they y range stays reasonable enough to see the other fits
   if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
-    ymax <- max(y)
+    ymax <- max(dat)
     #ymax <- ymaxes[2]
     warning("One or more density estimate(s) has spike which was cut off in the plots")
   } else {
