@@ -493,7 +493,7 @@ get_pp <- function(
     #---------
     # Returns
     #---------
-    return(list(
+    invisible(list(
       na_pred_models = na_pred_models,
       zero_pred_models = zero_pred_models,
       likelihood_tib = likelihood_tib
