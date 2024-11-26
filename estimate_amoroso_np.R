@@ -13,7 +13,10 @@ require(AmoRosoDistrib)
 # -> for Amoroso density function
 require(scdensity) 
 # -> for adjusted KDE
-
+require(mclust) 
+# -> for mixed normal estimation
+require(LaplacesDemon)
+# -> for mixed normal density function
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -92,6 +95,13 @@ estimate_amoroso_np <- function(dat = NULL,
   rdens <- safe_execute(quote(
     density(dat)), "rdens", dat)
   
+  ##### Mixed Normal #####
+  mnorm <- safe_execute(quote(
+    densityMclust(dat)), "mnorm", dat)
+  xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
+  mnorm$x <- xy_ordered_df$x
+  mnorm$y <- xy_ordered_df$y
+  
   
   ############################
   ### 2. EXTRACT AMOROSOS  ###
@@ -144,8 +154,9 @@ estimate_amoroso_np <- function(dat = NULL,
   # List of all models
   modlist <- list(rdens = rdens, bern1 = bern1, bern2 = bern2,
                   scKDE_uni = scKDE_uni,scKDE_2inf = scKDE_2inf,
-                  scKDE_2infplus = scKDE_2infplus, amo_mle = amo_mle,
-                  amo_hell_cdf = amo_hell_cdf, amo_hell_pdf = amo_hell_pdf
+                  scKDE_2infplus = scKDE_2infplus, mnorm = mnorm,
+                  amo_mle = amo_mle, amo_hell_cdf = amo_hell_cdf,
+                  amo_hell_pdf = amo_hell_pdf
   )
   
   # List of only valid models
@@ -171,11 +182,11 @@ estimate_amoroso_np <- function(dat = NULL,
     #ymax <- ymaxes[2]
     warning("At least one density estimate has a spike which was cut off in the plots")
   } else {
-   ymax <- ymaxes[1]
+    ymax <- ymaxes[1]
   }
   buffer <- 0.15*ymax
   ymax <- ymax + buffer
-
+  
   # Interpolate the valid models so that they all cover the same x range
   modlist_valid_interp <- lapply(names(modlist_valid), function(name) {
     mod <- modlist_valid[[name]]
@@ -227,6 +238,7 @@ estimate_amoroso_np <- function(dat = NULL,
       scKDE_uni = "Adj. KDE ('unimodal')",
       scKDE_2inf = "Adj. KDE ('twoInflections')",
       scKDE_2infplus = "Adj. KDE ('twoInflections+')",
+      mnorm = "Mixed Normal",
       amo_mle = amo_mle_title,
       amo_hell_cdf = amo_hell_cdf_title,
       amo_hell_pdf = amo_hell_pdf_title)
@@ -236,7 +248,7 @@ estimate_amoroso_np <- function(dat = NULL,
     
     # Tranform to vector
     titlevec <- valid_titles %>% unlist()
-
+    
     
     #---------------------------------------------------------------------------
     # Non-minimal style (i.e., not for proposal)
@@ -300,7 +312,7 @@ estimate_amoroso_np <- function(dat = NULL,
       
       # Add big title
       if (is.null(main)) {
-        big_title <- "Nonparametric vs Amoroso fits"
+        big_title <- "Nonparametric, Amoroso and Mixed Normal Fits"
         #amo_hell_pdf_title
       } else {
         big_title <- main
@@ -397,9 +409,10 @@ estimate_amoroso_np <- function(dat = NULL,
 ### Test the function ###
 
 #data <- palmerpenguins::penguins$bill_depth_mm
-#dat <- palmerpenguins::penguins$bill_length_mm
+dat <- palmerpenguins::penguins$bill_length_mm
 #dat <- palmerpenguins::penguins$flipper_length_mm
-#res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
+res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
+res$modlist_valid
 
 #set.seed(125)
 #data <- rgg4(50, a=4,l=1,c=7,mu=0)
