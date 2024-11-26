@@ -52,8 +52,8 @@ estimate_amoroso_np <- function(dat = NULL,
                                 amorosocrit = "ML", xticks = NULL
 ) {
   
-  #test
-  set.seed(80)
+  ### test
+  # set.seed(80)
   # dat <- rnorm(50, mean=100, sd=10)
   # plot = TRUE
   # hist = TRUE; breaks = 20; minimal = FALSE
@@ -110,7 +110,6 @@ estimate_amoroso_np <- function(dat = NULL,
   xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
   mnorm$x <- xy_ordered_df$x
   mnorm$y <- xy_ordered_df$y
-  
   
   ############################
   ### 2. EXTRACT AMOROSOS  ###
@@ -278,6 +277,9 @@ estimate_amoroso_np <- function(dat = NULL,
         if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
+          datspan <- range(dat)[2] - range(dat)[1]
+          xmin <- min(dat) - 0.15*datspan
+          xmax <- max(dat) + 0.15*datspan
           cat("2: xmin:",xmin," xmax:", xmax, " ymax: ", ymax)
           plot(NA, xlim = c(xmin, xmax), ylim = c(0.0, ymax), xlab = "x",
                ylab = "Density", main = titlevec[i], axes = FALSE)
