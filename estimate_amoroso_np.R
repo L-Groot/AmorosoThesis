@@ -52,6 +52,13 @@ estimate_amoroso_np <- function(dat = NULL,
                                 amorosocrit = "ML", xticks = NULL
 ) {
   
+  # dat <- rnorm(50, mean=100, sd=10)
+  # plot = TRUE
+  # hist = TRUE; breaks = 20; minimal = FALSE
+  # plot_common_x = TRUE; main = NULL
+  # generatingnormal = NULL # supply (mean,sd)
+  # amorosocrit = "ML"; xticks = NULL
+  
   ############################
   ### 1. ESTIMATE DENSITY  ###
   ############################
