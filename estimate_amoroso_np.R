@@ -52,6 +52,7 @@ estimate_amoroso_np <- function(dat = NULL,
                                 amorosocrit = "ML", xticks = NULL
 ) {
   
+  #test
   # dat <- rnorm(50, mean=100, sd=10)
   # plot = TRUE
   # hist = TRUE; breaks = 20; minimal = FALSE
