@@ -16,8 +16,6 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso_np.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/get_pp.R"))
 
 
 
@@ -52,7 +50,7 @@ plot_amoroso(xvec, a=4, l=1, c=-7, mu=0)
 plot_amoroso(xvec, a=4, l=1, c=-7, mu=0, minimal=FALSE)
 
 # We can also plot multiple Amorosos in different colours in one plot
-plot_amoroso(xvec, a=4, l=1, c=-7, mu=0, minimal=FALSE, col="magenta")
+plot_amoroso(xvec, a=4, l=1, c=-7, mu=0, minimal=F, col="magenta", title = "")
 lines(xvec, dgg4(xvec, a=4, l=1, c=-5, mu=0), col="seagreen")
 lines(xvec, dgg4(xvec, a=4, l=1, c=-2, mu=0), col="darkorange2")
 
@@ -129,9 +127,60 @@ glimpse(res$modlist$bern1$y)
 # We can also add the true data-generating normal distribution
 res <- estimate_amoroso_np(dat, generatingnormal = c(30,5))
 
-# The methods that fail to fit are skipped
+# If one method has a spike the y axis is adjusted to cut that off in the plot
 dat <- rexp(100,3)
 estimate_amoroso_np(dat)
 
+# Any estimation methods that fail to fit are skipped
+set.seed(70)
+dat <- rgg4(50,4,1,-0.1,0) # produce weird data
+hist(dat) # Inspect it
+estimate_amoroso_np(dat) # Try to fit Amorosos and NP methods
 
+
+
+################
+### get_pp() ###
+################
+
+# -> Assess predictive performance of the 3 Amoroso and various nonparametric fits
+# to a certain dataset
+
+# Generate data from normal distribution
+set.seed(93)
+dat <- rnorm(50, mean = 30, sd = 7)
+
+# Get predictive performance of Amoroso and NP Methods
+res <- get_pp(dat)
+# -> default uses k-fold CV with k=5
+
+# The results contain two likelihood measures:
+res$likelihood_tib_avg
+# -> each model's average log-likelihood of the test data across the folds
+# -> each model's average median likelihood of the test data across the folds
+
+# We can also vary k
+res <- get_pp(dat, k = 4)
+
+# Instead of k-fold, we can also just do a 'one-shot' train-test split
+res <- get_pp(dat, method = "split-half", prop_train = 0.7)
+# -> 70% of data is used for training, 30% for testing
+
+# The results are now simply the two likelihood measures on the test set
+res$likelihood_tib
+
+# If the data-generating distribution is an Amoroso with known parameters,
+# we can also express the likelihood measures as a proportion of the 'true'
+# likelihood of the test set.
+# This makes it easier to gauge the size of the differences in predictive
+# performance between the methods
+set.seed(65)
+dat <- rgg4(50, a=4, l=1, c=-5, mu=0) # Generate data from Amoroso
+res <- get_pp(dat, generating_amoroso = c(4,1,-5,0))
+res$likelihood_tib_avg
+
+
+
+
+ 
 
