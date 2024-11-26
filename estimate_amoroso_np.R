@@ -53,6 +53,7 @@ estimate_amoroso_np <- function(dat = NULL,
 ) {
   
   #test
+  set.seed(80)
   # dat <- rnorm(50, mean=100, sd=10)
   # plot = TRUE
   # hist = TRUE; breaks = 20; minimal = FALSE
@@ -275,6 +276,9 @@ estimate_amoroso_np <- function(dat = NULL,
         if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
+          print(xmin)
+          print(xmax)
+          print(ymax)
           plot(NA, xlim = c(xmin, xmax), ylim = c(0.0, ymax), xlab = "x",
                ylab = "Density", main = titlevec[i], axes = FALSE)
           ifelse(is.null(xticks),
