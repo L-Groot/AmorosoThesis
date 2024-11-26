@@ -53,13 +53,13 @@ estimate_amoroso_np <- function(dat = NULL,
 ) {
   
   ### test
-  # set.seed(80)
-  # dat <- rnorm(50, mean=100, sd=10)
-  # plot = TRUE
-  # hist = TRUE; breaks = 20; minimal = FALSE
-  # plot_common_x = TRUE; main = NULL
-  # generatingnormal = NULL # supply (mean,sd)
-  # amorosocrit = "ML"; xticks = NULL
+  set.seed(80)
+  dat <- rnorm(50, mean=100, sd=10)
+  plot = TRUE
+  hist = TRUE; breaks = 20; minimal = FALSE
+  plot_common_x = TRUE; main = NULL
+  generatingnormal = NULL # supply (mean,sd)
+  amorosocrit = "ML"; xticks = NULL
   
   ############################
   ### 1. ESTIMATE DENSITY  ###
@@ -186,7 +186,7 @@ estimate_amoroso_np <- function(dat = NULL,
   # If any of the valid models has a spike in the density estimate, cut off the
   # plot so that they y range stays reasonable enough to see the other fits
   if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
-    ymax <- max(dat)
+    ymax <- max(modlist_valid$rdens$y)
     #ymax <- ymaxes[2]
     warning("At least one density estimate has a spike which was cut off in the plots")
   } else {
