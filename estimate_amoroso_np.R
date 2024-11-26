@@ -196,6 +196,8 @@ estimate_amoroso_np <- function(dat = NULL,
   buffer <- 0.15*ymax
   ymax <- ymax + buffer
   
+  cat("1: xmin:",xmin," xmax:", xmax, " ymax: ", ymax)
+  
   # Interpolate the valid models so that they all cover the same x range
   modlist_valid_interp <- lapply(names(modlist_valid), function(name) {
     mod <- modlist_valid[[name]]
@@ -276,9 +278,7 @@ estimate_amoroso_np <- function(dat = NULL,
         if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
-          print(xmin)
-          print(xmax)
-          print(ymax)
+          cat("2: xmin:",xmin," xmax:", xmax, " ymax: ", ymax)
           plot(NA, xlim = c(xmin, xmax), ylim = c(0.0, ymax), xlab = "x",
                ylab = "Density", main = titlevec[i], axes = FALSE)
           ifelse(is.null(xticks),
