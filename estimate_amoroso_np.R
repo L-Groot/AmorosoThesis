@@ -409,10 +409,10 @@ estimate_amoroso_np <- function(dat = NULL,
 ### Test the function ###
 
 #data <- palmerpenguins::penguins$bill_depth_mm
-dat <- palmerpenguins::penguins$bill_length_mm
+#dat <- palmerpenguins::penguins$bill_length_mm
 #dat <- palmerpenguins::penguins$flipper_length_mm
-res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
-res$modlist_valid
+#res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
+#res$modlist_valid
 
 #set.seed(125)
 #data <- rgg4(50, a=4,l=1,c=7,mu=0)
