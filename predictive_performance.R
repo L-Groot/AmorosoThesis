@@ -23,8 +23,8 @@ sd <- 10
 set.seed(80)
 dat <- rnorm(n, mean=100, sd=sd)
 #hist(dat,breaks=10)
-estimate_amoroso_np(dat)
-#estimate_bernstein(dat, plot = TRUE)
+res <- estimate_amoroso_np(dat)
+#estimate_bernstein(dat, plot = TRUE, bound_type = "Carv")
 #estimate_amoroso(dat, plot=T)
 
 n <- 75
