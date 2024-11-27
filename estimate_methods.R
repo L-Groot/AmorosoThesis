@@ -20,28 +20,6 @@ require(LaplacesDemon)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-# Function that can handle errors in estimation
-
-# -> if result of Amoroso remains undefines
-
-
-safe_execute <- function(expr, object_name, data_vector) {
-  tryCatch(
-    {
-      result <- eval(bquote(.(expr)), envir = list(dat = data_vector))
-      return(result)
-    },
-    error = function(e) {
-      cat(paste("Error with fitting", object_name, ":", e$message, ";\n",
-                "Other methods were still fit.\n"))
-      return(NA) # assigns NA if method failed
-    }
-  )
-}
-
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
 
 estimate_methods <- function(dat = NULL,
                                 plot = TRUE, hist = TRUE, breaks = 20,
@@ -52,14 +30,24 @@ estimate_methods <- function(dat = NULL,
                                 amorosocrit = "ML", xticks = NULL
 ) {
   
-  ### test
-  set.seed(80)
-  dat <- rnorm(50, mean=100, sd=10)
-  plot = TRUE
-  hist = TRUE; breaks = 20; minimal = FALSE
-  plot_common_x = TRUE; main = NULL
-  generatingnormal = NULL # supply (mean,sd)
-  amorosocrit = "ML"; xticks = NULL
+  ########################
+  ### HELPER FUNCTION  ###
+  ########################
+  
+  # Function that can handle errors in estimation
+  safe_execute <- function(expr, object_name, data_vector) {
+    tryCatch(
+      {
+        result <- eval(bquote(.(expr)), envir = list(dat = data_vector))
+        return(result)
+      },
+      error = function(e) {
+        cat(paste("Error with fitting", object_name, ":", e$message, ";\n",
+                  "Other methods were still fit.\n"))
+        return(NA) # assigns NA if method failed
+      }
+    )
+  }
   
   ############################
   ### 1. ESTIMATE DENSITY  ###
@@ -110,6 +98,7 @@ estimate_methods <- function(dat = NULL,
   xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
   mnorm$x <- xy_ordered_df$x
   mnorm$y <- xy_ordered_df$y
+  
   
   ############################
   ### 2. EXTRACT AMOROSOS  ###
@@ -407,7 +396,7 @@ estimate_methods <- function(dat = NULL,
   
   
   #############################
-  ### 3. RETURN MODEL LISTS ###
+  ### 4. RETURN MODEL LISTS ###
   #############################
   
   return_list <- list(modlist, modlist_valid, modlist_valid_interp)
