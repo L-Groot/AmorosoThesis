@@ -13,7 +13,7 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_amoroso_np.R"))
+              "heads/main/estimate_methods.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
 
@@ -94,10 +94,11 @@ res <- estimate_amoroso(dat, plot = TRUE)
 
 
 #############################
-### estimate_amoroso_np() ###
+### estimate_methods() ###
 #############################
 
-# -> Estimate Amoroso and common nonparametric methods for a vector of data
+# -> Estimate Amoroso (parametric), Mixed normal (parametric) and common
+# nonparametric methods for a vector of data
 # -> To reduce running time, only 3 Amorosos are estimated:
 # MLE, Hellinger PDF and Hellinger CDF
 # -> I decided for this compromise (fit only one of the CDF methods and one of
@@ -109,7 +110,7 @@ set.seed(26)
 dat <- rnorm(40, mean = 30, sd = 5)
 
 # Estimate 3 Amorosos and the nonparametric methods
-res <- estimate_amoroso_np(dat)
+res <- estimate_methods(dat)
 
 # Returns:
 #-> list of all models
@@ -125,17 +126,17 @@ glimpse(res$modlist$bern1$y)
 
 
 # We can also add the true data-generating normal distribution
-res <- estimate_amoroso_np(dat, generatingnormal = c(30,5))
+res <- estimate_methods(dat, generatingnormal = c(30,5))
 
 # If one method has a spike the y axis is adjusted to cut that off in the plot
 dat <- rexp(100,3)
-estimate_amoroso_np(dat)
+estimate_methods(dat)
 
 # Any estimation methods that fail to fit are skipped
 set.seed(70)
 dat <- rgg4(50,4,1,-0.1,0) # produce weird data
 hist(dat) # Inspect it
-estimate_amoroso_np(dat) # Try to fit Amorosos and NP methods
+estimate_methods(dat) # Try to fit Amorosos and NP methods
 
 
 

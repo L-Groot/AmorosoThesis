@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------- 
 # Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_amoroso_np.R"))
+              "heads/main/estimate_methods.R"))
 
 # Load packages
 require(AmoRosoDistrib)
@@ -113,8 +113,8 @@ get_pp <- function(
       cat("n =", length(train), "in train set;",
           "n =", length(test), "in test set\n")
       
-      # Fit Amoroso and NP methods to train data
-      res <- estimate_amoroso_np(dat=train, hist = TRUE, amorosocrit = "ML")
+      # Fit P and NP methods to train data
+      res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
       
       # Helper function that generates predictions from 3 Amorosos
       generate_amo_predictions <- function(test, method_name, res, fold) {
@@ -354,7 +354,7 @@ get_pp <- function(
     #--------------------------------------------
     # Fit Amoroso and NP methods on training data
     #--------------------------------------------
-    res <- estimate_amoroso_np(train, hist = TRUE, breaks = 20)
+    res <- estimate_methods(train, hist = TRUE, breaks = 20)
     
     #---------------------
     # Generate predictions
