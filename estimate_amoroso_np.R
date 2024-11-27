@@ -177,17 +177,17 @@ estimate_amoroso_np <- function(dat = NULL,
   xmax <- max(sapply(modlist_valid, function(mod) max(mod$x)))
   
   # Define x range
-  x_range <- seq(xmin, xmax, length.out = 512)
+  xvals <- seq(xmin, xmax, length.out = 512)
   
   # Get ymin and ymax across all valid models
   ymaxes <- sort(sapply(modlist_valid, function(mod) max(mod$y)),
                  decreasing = TRUE)
   
-  # If any of the valid models has a spike in the density estimate, cut off the
-  # plot so that they y range stays reasonable enough to see the other fits
+  # If any of the valid models has a spike in the density estimate, cut that
+  # fit off -> just make the max histogram value the ymax
   if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
-    ymax <- max(modlist_valid$rdens$y)
-    #ymax <- ymaxes[2]
+    hist_list <- hist(dat, breaks=breaks, prob=TRUE)
+    ymax <- max(hist_list$density) #-> make ymax the max histogram density
     warning("At least one density estimate has a spike which was cut off in the plots")
   } else {
     ymax <- ymaxes[1]
@@ -195,16 +195,14 @@ estimate_amoroso_np <- function(dat = NULL,
   buffer <- 0.15*ymax
   ymax <- ymax + buffer
   
-  cat("1: xmin:",xmin," xmax:", xmax, " ymax: ", ymax)
-  
   # Interpolate the valid models so that they all cover the same x range
   modlist_valid_interp <- lapply(names(modlist_valid), function(name) {
     mod <- modlist_valid[[name]]
     ## For valid models: interpolate
     if (length(mod) > 1) {
-      y <- approx(mod$x, mod$y, xout = x_range, rule = 1)$y
+      y <- approx(mod$x, mod$y, xout = xvals, rule = 1)$y
       y[is.na(y)] <- 0 # Replace NA density values with 0
-      list(x = x_range, y = y)
+      list(x = xvals, y = y)
       ## For invalid models: assign NA to model predictions
     } else {
       NA
@@ -213,6 +211,12 @@ estimate_amoroso_np <- function(dat = NULL,
   # Add model names
   names(modlist_valid_interp) <- names(modlist_valid)
   
+  # Make xlim for plot
+  xmin_dat <- min(dat)
+  xmax_dat <- max(dat)
+  xrange <- xmax_dat-xmin_dat
+  xmin_plot <- xmin_dat-0.15*xrange
+  xmax_plot <- xmax_dat+0.15*xrange
   
   #####################
   ### 4. MAKE PLOTS ###
@@ -277,12 +281,8 @@ estimate_amoroso_np <- function(dat = NULL,
         if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
-          datspan <- range(dat)[2] - range(dat)[1]
-          xmin <- min(dat) - 0.15*datspan
-          xmax <- max(dat) + 0.15*datspan
-          cat("2: xmin:",xmin," xmax:", xmax, " ymax: ", ymax)
-          plot(NA, xlim = c(xmin, xmax), ylim = c(0.0, ymax), xlab = "x",
-               ylab = "Density", main = titlevec[i], axes = FALSE)
+          plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
+               xlab = "x", ylab = "Density", main = titlevec[i], axes = FALSE)
           ifelse(is.null(xticks),
                  axis(1),
                  axis(1, at = xticks, labels = xticks))
@@ -303,7 +303,7 @@ estimate_amoroso_np <- function(dat = NULL,
           
           # Optional: add data-generating normal distribution
           if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
-            lines(x_range, dnorm(x_range,
+            lines(xvals, dnorm(xvals,
                                  mean = generatingnormal[1],
                                  sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
@@ -350,9 +350,9 @@ estimate_amoroso_np <- function(dat = NULL,
         if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
-          plot(NA, xlim = c(xmin, xmax), ylim = c(0.0,ymax), type = "l",
-               lwd = 1, lty = 2, main = "",
-               axes = F, xlab="", ylab ="")
+          plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0,ymax),
+               type = "l", lwd = 1, lty = 2, main = "", axes = F,
+               xlab="", ylab ="")
           
           # Optional: Add custom x axis ticks
           ifelse(is.null(xticks),
@@ -375,7 +375,7 @@ estimate_amoroso_np <- function(dat = NULL,
           
           # Optional: add data-generating normal distribution
           if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
-            lines(x_range, dnorm(x_range,
+            lines(xvals, dnorm(xvals,
                                  mean = generatingnormal[1],
                                  sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
