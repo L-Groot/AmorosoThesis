@@ -43,7 +43,7 @@ safe_execute <- function(expr, object_name, data_vector) {
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-estimate_amoroso_np <- function(dat = NULL,
+estimate_methods <- function(dat = NULL,
                                 plot = TRUE, hist = TRUE, breaks = 20,
                                 minimal = FALSE,
                                 plot_common_x = TRUE,
@@ -434,6 +434,6 @@ estimate_amoroso_np <- function(dat = NULL,
 #data <- rnorm(70, mean = 4, sd = 0.7)
 #data <- rgg4(40, a=4, l=1, c=7, mu=0)
 
-#res1 <- estimate_amoroso_np(dat = data, plot_common_x = TRUE)
-#res2 <- estimate_amoroso_np(dat = data, plot_common_x = FALSE)
-#res3 <- estimate_amoroso_np(dat = data, plot_common_x = TRUE)
+#res1 <- estimate_methods(dat = data, plot_common_x = TRUE)
+#res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
+#res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
