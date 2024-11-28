@@ -3,6 +3,8 @@
 # Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/pred_mnorm.R"))
 
 # Load packages
 require(AmoRosoDistrib)
@@ -116,6 +118,9 @@ get_pp <- function(
       # Fit P and NP methods to train data
       res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
       
+      # Get interpolated density values (same x range)
+      res <- res$modlist_valid_interp
+      
       # Helper function that generates predictions from 3 Amorosos
       generate_amo_predictions <- function(test, method_name, res, fold) {
         
@@ -144,8 +149,8 @@ get_pp <- function(
       pred_y_amo_hell_cdf <- generate_amo_predictions(test, "amo_hell_cdf", res, fold)
       pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res, fold)
       
-      # Get interpolated density values (same x range)
-      res <- res$modlist_valid_interp
+      # Generate predictions from mixed normal
+      pred_mnorm <- pred_mnorm(test,res$mnorm)
       
       # Make a list to store continuous functions for the non-parametric fits
       npfun_list <- list(rdens = NULL,
@@ -172,12 +177,13 @@ get_pp <- function(
                         scKDE_uni = NULL,
                         scKDE_2inf = NULL,
                         scKDE_2infplus = NULL,
+                        mnorm = NULL,
                         amo_mle = NULL,
                         amo_hell_cdf = NULL,
                         amo_hell_pdf = NULL)
       
       # Add predictions from NP fits to pred_list
-      for (i in 1:(length(pred_list)-3)) { # leave out Amorosos
+      for (i in 1:(length(pred_list)-4)) { # leave out parametric fits
         
         if(!is.na(npfun_list[i])) { # if the fit is valid:
           predvec <- npfun_list[[i]](test) # -> add predictions
