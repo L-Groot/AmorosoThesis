@@ -25,13 +25,13 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 ) 
   
-  set.seed(93)
-  dat <- rnorm(50, mean = 30, sd = 7)
-  method = "k-fold"
-  generating_amoroso = NULL
-  k = 5
-  prop_train = 0.8
-  seed = 125
+  # set.seed(93)
+  # dat <- rnorm(50, mean = 30, sd = 7)
+  # method = "k-fold"
+  # generating_amoroso = NULL
+  # k = 5
+  # prop_train = 0.8
+  # seed = 125
   
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -134,7 +134,8 @@ get_pp <- function(
           if (anyNA(pred_y)) {
             nr_na <- sum(is.na(pred_y))
             pred_y[is.na(pred_y)] <- 0
-            warning(paste("Fold", fold, ":", nr_na, "NA in the", method_name, "predictions were replaced with zero."))
+            warning(paste("Fold", fold, ":", nr_na, "NA in the", method_name,
+                          "predictions were replaced with zero."))
           }
           return(pred_y)
           
@@ -145,9 +146,12 @@ get_pp <- function(
       }
       
       # Generate predictions from MLE, Hellinger CDF and Hellinger PDF Amoroso
-      pred_y_amo_mle <- generate_amo_predictions(test, "amo_mle", res, fold)
-      pred_y_amo_hell_cdf <- generate_amo_predictions(test, "amo_hell_cdf", res, fold)
-      pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res, fold)
+      pred_y_amo_mle <- generate_amo_predictions(
+        test, "amo_mle", res, fold)
+      pred_y_amo_hell_cdf <- generate_amo_predictions(
+        test, "amo_hell_cdf", res, fold)
+      pred_y_amo_hell_pdf <- generate_amo_predictions(
+        test, "amo_hell_pdf", res, fold)
       
       # Generate predictions from mixed normal
       mn_mod <- res$modlist_valid$mnorm # Extract MN model
@@ -231,11 +235,13 @@ get_pp <- function(
       for (i in seq_along(pred_list)) {
         pred <- pred_list[[i]]
         method_name <- names(pred_list)[i]
+        # Check for NAs
         if(anyNA(pred)) {
           na_pred_models <- append(na_pred_models, method_name)
           warning(paste("Fold", fold, ": Skipping log-likelihood and median
                         likelihood calculations for method:", method_name, ";
                         Predictions include NA."))
+          # Assign NA to both likelihood measures
           logL_vec_fold[i] <- NA
           medL_vec_fold[i] <- NA
         } else if (any(pred == 0)) {
@@ -243,11 +249,15 @@ get_pp <- function(
           warning(paste("Fold", fold, ": Skipping log-likelihood calculation for
                         method:", method_name, "; Predictions include 0. Still
                         calculating median likelihood."))
+          # Assign NA to log-L measure
           logL_vec_fold[i] <- NA
+          # -> Median likelihood of all methods predictions for this fold
           medL_vec_fold[i] <- median(pred)
         } else {
-          logL_vec_fold[i] <- sum(log(pred)) # -> Log likelihood of all methods predictions for this fold
-          medL_vec_fold[i] <- median(pred) # -> Median likelihood of all methods predictions for this fold
+          # -> Log likelihood of all methods predictions for this fold
+          logL_vec_fold[i] <- sum(log(pred)) 
+          # -> Median likelihood of all methods predictions for this fold
+          medL_vec_fold[i] <- median(pred) 
         }
       }
       
@@ -278,10 +288,12 @@ get_pp <- function(
       
       # Add columns with average likelihood measures (across folds)
       likelihood_tib_full <- likelihood_tib %>%
-        mutate(logL_avg = rowMeans(across(starts_with("logL_f")), na.rm = FALSE)) %>%
-        mutate(logL_prop_avg = rowMeans(across(starts_with("logL_prop_f")), na.rm = FALSE)) %>%
-        mutate(medL_avg = rowMeans(across(starts_with("medL_f")), na.rm = FALSE)) %>%
-        mutate(medL_prop_avg = rowMeans(across(starts_with("medL_prop_f")), na.rm = FALSE))
+        mutate(
+          logL_avg = rowMeans(across(starts_with("logL_f"))),
+          logL_prop_avg = rowMeans(across(starts_with("logL_prop_f"))),
+          medL_avg = rowMeans(across(starts_with("medL_f"))),
+          medL_prop_avg = rowMeans(across(starts_with("medL_prop_f")))
+        )
       
       # Make new tibble with only the average columns
       likelihood_tib_avg <- likelihood_tib_full %>%
@@ -293,8 +305,8 @@ get_pp <- function(
       
       # Add columns with average likelihood measures (across folds)
       likelihood_tib_full <- likelihood_tib %>%
-        mutate(logL_avg = rowMeans(across(starts_with("logL_f")), na.rm = FALSE)) %>%
-        mutate(medL_avg = rowMeans(across(starts_with("medL_f")), na.rm = FALSE))
+        mutate(logL_avg = rowMeans(across(starts_with("logL_f")))) %>%
+        mutate(medL_avg = rowMeans(across(starts_with("medL_f"))))
       
       # Make new tibble with only the average columns
       likelihood_tib_avg <- likelihood_tib_full %>%
@@ -315,16 +327,15 @@ get_pp <- function(
   } else {
     
     
-    #-----------------------------------------------------------------------------  
-    #-----------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    #---------------------------------------------------------------------------
     
     ##################
     ### SPLIT-HALF ###
     ##################
     
-    
     cat("--------------------------------------------------------------\n")
-    cat("Split-half CV with a data proportion of", prop_train, "used for training\n")
+    cat("Split-half CV (Proportion train = :", prop_train,"\n")
     cat("--------------------------------------------------------------\n")
     
     #-----------------------------
@@ -386,7 +397,8 @@ get_pp <- function(
         if (anyNA(pred_y)) {
           nr_na <- sum(is.na(pred_y))
           pred_y[is.na(pred_y)] <- 0
-          warning(paste(nr_na, "NA in the", method_name, "predictions were replaced with zero."))
+          warning(paste(nr_na, "NA in the", method_name,
+                        "predictions were replaced with zero."))
         }
         return(pred_y)
         
@@ -397,13 +409,17 @@ get_pp <- function(
       }
     }
     
-    # Generate predictions from MLE, Hellinger CDF and Hellinger PDF Amoroso
+    # Generate predictions from mixed normal
+    mn_mod <- res$modlist_valid$mnorm # Extract MN model
+    pred_mnorm <- pred_mnorm(test, mn_mod, plot=F)
+    
+    # Generate predictions from Amorosos (MLE, Hellinger CDF, Hellinger PDF)
     pred_y_amo_mle <- generate_amo_predictions(test, "amo_mle", res)
     pred_y_amo_hell_cdf <- generate_amo_predictions(test, "amo_hell_cdf", res)
     pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res)
     
     # Get interpolated Amoroso density values
-    res <- res$modlist_valid_interp
+    res_interp <- res$modlist_valid_interp
     
     # Make a list to store continuous functions for the non-parametric fits
     npfun_list <- list(rdens = NULL,
@@ -415,8 +431,10 @@ get_pp <- function(
     
     # Use splinefun() to make a continuous function from the NP estimates
     for (i in 1:length(npfun_list)) { #the first 6 fits in res are the np fits
-      if (length(res[[i]]) > 1) { #if the fit is valid, estimate function
-        npfun_list[[i]] <- splinefun(res[[i]]$x,res[[i]]$y, method = "monoH.FC")
+      if (length(res_interp[[i]]) > 1) { #if the fit is valid, estimate function
+        npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
+                                     res_interp[[i]]$y,
+                                     method = "monoH.FC")
       } else { #if the fit is not valid, put NA
         npfun_list[[i]] <- NA
       }
@@ -429,12 +447,13 @@ get_pp <- function(
                       scKDE_uni = NULL,
                       scKDE_2inf = NULL,
                       scKDE_2infplus = NULL,
+                      mnorm = NULL,
                       amo_mle = NULL,
                       amo_hell_cdf = NULL,
                       amo_hell_pdf = NULL)
     
-    # Make predictions from NP methods
-    for (i in 1:(length(pred_list)-3)) { # leave out Amorosos
+    # Make predicitions from NP methods and add to pred_list
+    for (i in 1:(length(pred_list)-4)) { # leave out parametric methods
       
       if(!is.na(npfun_list[i])) { # if the fit is valid:
         predvec <- npfun_list[[i]](test) # -> add predictions
@@ -447,10 +466,12 @@ get_pp <- function(
       }
     }
     
-    # Add Amoroso predictions to pred_list
+    # Add Amoroso and mixed normal predictions to pred_list
+    pred_list$mnorm <- pred_mnorm
     pred_list$amo_mle <- pred_y_amo_mle
     pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
     pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
+
     
     # Remove models that have NA predictions
     pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
@@ -470,22 +491,28 @@ get_pp <- function(
       method_name <- names(pred_list)[i]
       
       # Calculate likelihood measures for each method
+      # Check for NAs
       if (any(pred == 0)) {
         zero_pred_models <- c(zero_pred_models, method_name)
         warning(paste("Skipping log-likelihood calculation for method:",
                       method_name, "; Predictions include 0. Still calculating
                       median likelihood."))
+        # Assign NA to both likelihood measures
         logL_vec_testset[i] <- NA
         medL_vec_testset[i] <- median(pred)
       } else if (anyNA(pred)) {
         na_pred_models <- append(na_pred_models)
         warning(paste("Skipping log-likelihood and med-likelihood calculations
                       for method:", method_name, "; Predictions include NA."))
+        # Assign NA for log-L measure
         logL_vec_testset[i] <- NA
+        # -> Median likelihood of all methods predictions for the test set
         medL_vec_testset[i] <- NA
       } else {
-        logL_vec_testset[i] <- sum(log(pred)) # -> Log likelihood of all methods predictions for the test set
-        medL_vec_testset[i] <- median(pred) # -> Median likelihood of all methods predictions for the test set
+        # -> Log likelihood of all methods predictions for the test set
+        logL_vec_testset[i] <- sum(log(pred))
+        # -> Median likelihood of all methods predictions for the test set
+        medL_vec_testset[i] <- median(pred) 
       }
     }
     
@@ -513,13 +540,16 @@ get_pp <- function(
   }
 }
 
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 ### Example usage ###
 
-#mydata <- rgg4(10, a=4, l=1, c=7, mu=0)
+mydata <- rgg4(100, a=4, l=1, c=7, mu=0)
 #(mydata <- rgg4(20, a=-1, l=2, c=2, mu=10))
 
 #res <- get_pp(mydata, k=5)
-#res <- get_pp(mydata, k=5, generating_amoroso = c(-1,2,2,10))
+res <- get_pp(mydata, k=5, generating_amoroso = c(-4,1,7,0))
 #res <- get_pp(mydata, method="split-half")
 #res <- get_pp(mydata, method = "split-half", generating_amoroso = c(-1,2,2,10))
 
