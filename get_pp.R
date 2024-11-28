@@ -25,13 +25,13 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 ) 
   
-  # set.seed(93)
-  # dat <- rnorm(50, mean = 30, sd = 7)
-  # method = "split-half"
-  # generating_amoroso = NULL
-  # k = 5
-  # prop_train = 0.8
-  # seed = 125
+  set.seed(93)
+  dat <- rnorm(50, mean = 30, sd = 7)
+  method = "k-fold"
+  generating_amoroso = NULL
+  k = 5
+  prop_train = 0.8
+  seed = 125
   
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ get_pp <- function(
     likelihood_tib <- tibble(
       method = c("rdens","bern1", "bern2",
                  "scKDE_uni", "scKDE_2inf", "scKDE_2infplus",
-                 "amo_mle", "amo_hell_cdf", "amo_hell_pdf")
+                 "mnorm", "amo_mle", "amo_hell_cdf", "amo_hell_pdf")
     )
     
     #---------------------------------------------------------------
@@ -119,7 +119,7 @@ get_pp <- function(
       res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
       
       # Get interpolated density values (same x range)
-      res <- res$modlist_valid_interp
+      xy_interpolated <- res$modlist_valid_interp
       
       # Helper function that generates predictions from 3 Amorosos
       generate_amo_predictions <- function(test, method_name, res, fold) {
@@ -150,7 +150,11 @@ get_pp <- function(
       pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res, fold)
       
       # Generate predictions from mixed normal
-      pred_mnorm <- pred_mnorm(test,res$mnorm)
+      mn_mod <- res$modlist_valid$mnorm # Extract MN model
+      pred_mnorm <- pred_mnorm(test, mn_mod, plot=F)
+      
+      # Extract list wiht interpolated x and y values
+      res_interp <- res$modlist_valid_interp
       
       # Make a list to store continuous functions for the non-parametric fits
       npfun_list <- list(rdens = NULL,
@@ -162,13 +166,14 @@ get_pp <- function(
       
       # Use splinefun() to make a continuous function from the NP estimates
       for (i in 1:length(npfun_list)) { #the first 6 fits in res are the np fits
-        if (length(res[[i]]) > 1) { #if the fit is valid, estimate function
-          npfun_list[[i]] <- splinefun(res[[i]]$x,res[[i]]$y, method = "monoH.FC")
+        if (length(res_interp[[i]]) > 1) { #if the fit is valid, estimate function
+          npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
+                                       res_interp[[i]]$y,
+                                       method = "monoH.FC")
         } else { #if the fit is not valid, put NA
           npfun_list[[i]] <- NA
         }
       }
-      
       
       # Make a list to store predictions for test fold
       pred_list <- list(rdens = NULL,
@@ -197,7 +202,8 @@ get_pp <- function(
         }
       }
       
-      # Add Amoroso predictions to pred_list
+      # Add Amoroso and Mixed Normal predictions to pred_list
+        pred_list$mnorm <- pred_mnorm
         pred_list$amo_mle <- pred_y_amo_mle
         pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
         pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
@@ -207,9 +213,11 @@ get_pp <- function(
       
       # Calculate likelihood of test set under data-generating Amoroso
       if (add_prop == TRUE) {
+        
         true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
         max_logL <- sum(log(true_pred))
         max_medL <- median(true_pred)
+        
       }
       
       # Empty vector to store log-likelihoods for current fold
