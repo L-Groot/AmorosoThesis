@@ -1,6 +1,9 @@
 #-------------------------------------------------------------------------------
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 # Source functions
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
@@ -11,7 +14,9 @@ require(AmoRosoDistrib)
 require(caret)
 require(tidyverse)
 
-
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Function that computes predictive performance of the NP and P methods
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
@@ -33,11 +38,8 @@ get_pp <- function(
   # prop_train = 0.8
   # seed = 125
   
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
+  #-------------------------------------------------------------------------------
 {
-  
   # If we know a data-generating Amoroso, we can express the log likelihood of
   # test data as a proportion of the log likelihood of that test data under the
   # 'true' model
@@ -53,8 +55,7 @@ get_pp <- function(
     add_prop <- FALSE
   }
   
-  
-  #-----------------------------------------------------------------------------  
+
   #-----------------------------------------------------------------------------
   
   ###############
@@ -101,6 +102,9 @@ get_pp <- function(
     #-------------------
     for (fold in 1:k) {
       
+      #------------------------------------------
+      # Make train and test data for current fold
+      #------------------------------------------
       # Print fold number
       cat("\nfold =", fold, "\n")
       # Extract train data for current fold (from k-1 folds)
@@ -115,12 +119,31 @@ get_pp <- function(
       cat("n =", length(train), "in train set;",
           "n =", length(test), "in test set\n")
       
+      #-----------------------------------
       # Fit P and NP methods to train data
+      #-----------------------------------
       res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
       
       # Get interpolated density values (same x range)
       xy_interpolated <- res$modlist_valid_interp
       
+      #-----------------------------------------------
+      # Make a list to store predictions for test fold
+      #-----------------------------------------------
+      pred_list <- list(rdens = NULL,
+                        bern1 = NULL,
+                        bern2 = NULL,
+                        scKDE_uni = NULL,
+                        scKDE_2inf = NULL,
+                        scKDE_2infplus = NULL,
+                        mnorm = NULL,
+                        amo_mle = NULL,
+                        amo_hell_cdf = NULL,
+                        amo_hell_pdf = NULL)
+      
+      #--------------------------------
+      # Generate parametric predictions
+      #--------------------------------
       # Helper function that generates predictions from 3 Amorosos
       generate_amo_predictions <- function(test, method_name, res, fold) {
         
@@ -160,6 +183,15 @@ get_pp <- function(
       # Extract list wiht interpolated x and y values
       res_interp <- res$modlist_valid_interp
       
+      # Add Amoroso and Mixed Normal predictions to pred_list
+      pred_list$mnorm <- pred_mnorm
+      pred_list$amo_mle <- pred_y_amo_mle
+      pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
+      pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
+      
+      #-----------------------------------
+      # Generate nonparametric predictions
+      #-----------------------------------
       # Make a list to store continuous functions for the non-parametric fits
       npfun_list <- list(rdens = NULL,
                          bern1 = NULL,
@@ -179,18 +211,6 @@ get_pp <- function(
         }
       }
       
-      # Make a list to store predictions for test fold
-      pred_list <- list(rdens = NULL,
-                        bern1 = NULL,
-                        bern2 = NULL,
-                        scKDE_uni = NULL,
-                        scKDE_2inf = NULL,
-                        scKDE_2infplus = NULL,
-                        mnorm = NULL,
-                        amo_mle = NULL,
-                        amo_hell_cdf = NULL,
-                        amo_hell_pdf = NULL)
-      
       # Add predictions from NP fits to pred_list
       for (i in 1:(length(pred_list)-4)) { # leave out parametric fits
         
@@ -206,22 +226,14 @@ get_pp <- function(
         }
       }
       
-      # Add Amoroso and Mixed Normal predictions to pred_list
-        pred_list$mnorm <- pred_mnorm
-        pred_list$amo_mle <- pred_y_amo_mle
-        pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
-        pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
-      
-        
-      #### Calculate likelihood of this test folds' observations ####
-      
-      # Calculate likelihood of test set under data-generating Amoroso
+      #----------------------------------------------
+      # Calculate likelihood measures of current fold
+      #----------------------------------------------
+      # Calculate 'true' likelihood of test set under data-generating Amoroso
       if (add_prop == TRUE) {
-        
         true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
-        max_logL <- sum(log(true_pred))
-        max_medL <- median(true_pred)
-        
+        true_logL <- sum(log(true_pred))
+        true_medL <- median(true_pred)
       }
       
       # Empty vector to store log-likelihoods for current fold
@@ -261,6 +273,9 @@ get_pp <- function(
         }
       }
       
+      #--------------------------------------------------
+      # Add likelihood measures of current fold to tibble
+      #--------------------------------------------------
       # Create column names for current fold
       fold_colname_logL <- paste0("logL_f", fold)
       fold_colname_logL_prop <- paste0("logL_prop_f", fold)
@@ -273,15 +288,15 @@ get_pp <- function(
       likelihood_tib[[fold_colname_medL]] <- medL_vec_fold
       # Transform to proportion of "true" likelihood (under data-gen. model)
       if(add_prop == TRUE) {
-        likelihood_tib[[fold_colname_logL_prop]] <- logL_vec_fold/max_logL
-        likelihood_tib[[fold_colname_medL_prop]] <- medL_vec_fold/max_medL
+        likelihood_tib[[fold_colname_logL_prop]] <- logL_vec_fold/true_logL
+        likelihood_tib[[fold_colname_medL_prop]] <- medL_vec_fold/true_medL
       }
       
     }
     
-    #------------------------------------------------------
-    # Calculate average of likelihood measures across folds
-    #------------------------------------------------------
+    #---------------------------------------------------
+    # Calculate average likelihood measures across folds
+    #---------------------------------------------------
     if (add_prop == TRUE) {
       
       # -> Likelihood measures expressed as proportion of "true" likelihoods
@@ -314,9 +329,9 @@ get_pp <- function(
     }
     
     
-    #---------------
-    # Return tibbles
-    #---------------
+    #--------------------------------------------
+    # Return tibbles and lists with failed models
+    #--------------------------------------------
     return(list(
       na_pred_models = unique(na_pred_models),
       zero_pred_models = unique(zero_pred_models),
@@ -327,7 +342,6 @@ get_pp <- function(
   } else {
     
     
-    #---------------------------------------------------------------------------
     #---------------------------------------------------------------------------
     
     ##################
@@ -366,8 +380,8 @@ get_pp <- function(
     #--------------------------------------------------------------------
     if (add_prop == TRUE) {
       true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
-      max_logL <- sum(log(true_pred))
-      max_medL <- median(true_pred)
+      true_logL <- sum(log(true_pred))
+      true_medL <- median(true_pred)
     }
     
     #---------------------------------------------------------------
@@ -381,9 +395,23 @@ get_pp <- function(
     #--------------------------------------------
     res <- estimate_methods(train, hist = TRUE, breaks = 20)
     
-    #---------------------
-    # Generate predictions
-    #---------------------
+    #----------------------------------------------
+    # Create list to store predictions for test set
+    #----------------------------------------------
+    pred_list <- list(rdens = NULL,
+                      bern1 = NULL,
+                      bern2 = NULL,
+                      scKDE_uni = NULL,
+                      scKDE_2inf = NULL,
+                      scKDE_2infplus = NULL,
+                      mnorm = NULL,
+                      amo_mle = NULL,
+                      amo_hell_cdf = NULL,
+                      amo_hell_pdf = NULL)
+    
+    #---------------------------------------------
+    # Generate predictions from parametric methods
+    #---------------------------------------------
     # Helper function that generates predictions from 3 Amorosos
     generate_amo_predictions <- function(test, method_name, res) {
       
@@ -421,6 +449,15 @@ get_pp <- function(
     # Get interpolated Amoroso density values
     res_interp <- res$modlist_valid_interp
     
+    # Add Amoroso and mixed normal predictions to pred_list
+    pred_list$mnorm <- pred_mnorm
+    pred_list$amo_mle <- pred_y_amo_mle
+    pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
+    pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
+    
+    #------------------------------------------------
+    # Generate predictions from nonparametric methods
+    #------------------------------------------------
     # Make a list to store continuous functions for the non-parametric fits
     npfun_list <- list(rdens = NULL,
                        bern1 = NULL,
@@ -440,18 +477,6 @@ get_pp <- function(
       }
     }
     
-    # Make a list to store predictions for test set
-    pred_list <- list(rdens = NULL,
-                      bern1 = NULL,
-                      bern2 = NULL,
-                      scKDE_uni = NULL,
-                      scKDE_2inf = NULL,
-                      scKDE_2infplus = NULL,
-                      mnorm = NULL,
-                      amo_mle = NULL,
-                      amo_hell_cdf = NULL,
-                      amo_hell_pdf = NULL)
-    
     # Make predicitions from NP methods and add to pred_list
     for (i in 1:(length(pred_list)-4)) { # leave out parametric methods
       
@@ -466,19 +491,11 @@ get_pp <- function(
       }
     }
     
-    # Add Amoroso and mixed normal predictions to pred_list
-    pred_list$mnorm <- pred_mnorm
-    pred_list$amo_mle <- pred_y_amo_mle
-    pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
-    pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
-
-    
-    # Remove models that have NA predictions
-    pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
-    
     #----------------------------------------------------------
     # For each model, calculate likelihood of test observations
     #----------------------------------------------------------
+    # Remove any models that contain NA predictions
+    pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
     # Empty vector to store log-likelihoods of test set OF EACH VALID MODEL
     logL_vec_testset <- numeric(length(pred_list))
     # Empty vector to store med-likelihoods of test set OF EACH VALID MODEL
@@ -516,6 +533,10 @@ get_pp <- function(
       }
     }
     
+    #---------------------------------------
+    # Create tibble with likelihood measures
+    #---------------------------------------
+    
     # Make tibble with likelihood measures
     likelihood_tib <- tibble(
       method = names(pred_list),
@@ -525,13 +546,13 @@ get_pp <- function(
 
     # Express log-likelihood as proportions
     if(add_prop == TRUE) {
-      likelihood_tib[["logL_prop_testset"]] <- logL_vec_testset/max_logL
-      likelihood_tib[["medL_prop_testset"]] <- medL_vec_testset/max_medL
+      likelihood_tib[["logL_prop_testset"]] <- logL_vec_testset/true_logL
+      likelihood_tib[["medL_prop_testset"]] <- medL_vec_testset/true_medL
     }
     
-    #---------
-    # Returns
-    #---------
+    #--------------------------------------------
+    # Return tibbles and lists with failed models
+    #--------------------------------------------
     invisible(list(
       na_pred_models = na_pred_models,
       zero_pred_models = zero_pred_models,
@@ -545,13 +566,13 @@ get_pp <- function(
 
 ### Example usage ###
 
-mydata <- rgg4(100, a=4, l=1, c=7, mu=0)
+#mydata <- rgg4(100, a=4, l=1, c=7, mu=0)
 #(mydata <- rgg4(20, a=-1, l=2, c=2, mu=10))
 
 #res <- get_pp(mydata, k=5)
-res <- get_pp(mydata, k=5, generating_amoroso = c(-4,1,7,0))
+#res <- get_pp(mydata, k=5, generating_amoroso = c(4,1,7,0))
 #res <- get_pp(mydata, method="split-half")
-#res <- get_pp(mydata, method = "split-half", generating_amoroso = c(-1,2,2,10))
+#res <- get_pp(mydata, method = "split-half", generating_amoroso = c(4,1,7,0))
 
 #res$likelihood_tib_full
 #res$likelihood_tib_avg
