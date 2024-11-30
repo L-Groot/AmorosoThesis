@@ -7,7 +7,7 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/pred_mnorm.R"))
+              "heads/main/predict_mnorm.R"))
 
 # Load packages
 require(AmoRosoDistrib)
@@ -25,37 +25,53 @@ get_pp <- function(
     method = "k-fold", # "k-fold" or "split-half"
     k = 5, # nr of folds (for method = "k-fold)
     prop_train = 0.8, # prop. data in train set (for method = "split-half")
-    generating_amoroso = NULL, #if data-generating dist. is Amoroso, add
-    # predictive performance as proportion of maximum possible
+    generating_amoroso = NULL, #if data-generating dist. is known Amoroso
+    # calculate likelihood of predictions as proportion of "true" likelihood
+    # under the generating distribution
+    generating_normal = NULL, #if data-generating dist. is known normal,
+    # calculate likelihood of predictions as proportion of "true" likelihood
+    # under the generating distribution
     seed = 125 # seed to make fold creation reproducible
-) 
+)
   
-  # set.seed(93)
-  # dat <- rnorm(50, mean = 30, sd = 7)
-  # method = "k-fold"
-  # generating_amoroso = NULL
-  # k = 5
-  # prop_train = 0.8
-  # seed = 125
-  
-  #-------------------------------------------------------------------------------
+  set.seed(93)
+  dat <- rnorm(50, mean = 30, sd = 7)
+  method = "k-fold"
+  generating_normal = c(30,7)
+  k = 5
+  prop_train = 0.8
+  seed = 125
 {
-  # If we know a data-generating Amoroso, we can express the log likelihood of
-  # test data as a proportion of the log likelihood of that test data under the
-  # 'true' model
   
-  if (!is.null(generating_amoroso)) {
+  
+  #---------------------------------------------------------------------------
+  # Calculate log likelihood of test data under data-generating Amoroso/Normal
+  #---------------------------------------------------------------------------
+  add_prop_amo <- FALSE
+  add_prop_norm <- FALSE
+  
+  if (!is.null(generating_amoroso) && !is.null(generating_normal)) {
+    stop(paste0("Supply EITHER Amoroso OR Normal as data-generating",
+                "distribution (not both)"))
+  } else if (!is.null(generating_amoroso)) {
     if (length(generating_amoroso) == 4 && is.numeric(generating_amoroso)) {
-      add_prop <- TRUE
+      add_prop_amo <- TRUE
       genpar <- generating_amoroso
     } else {
       stop("Amoroso parameters must be 4 numbers (a,l,c,mu)\n")
     }
+  } else if (!is.null(generating_normal)) {
+    if (length(generating_normal) == 2 && is.numeric(generating_normal)) {
+      add_prop_norm <- TRUE
+      genpar <- generating_normal
+    } else {
+      stop("Normal parameters must be 2 numbers (mean, sd)\n")
+    }
   } else {
-    add_prop <- FALSE
+    add_prop_amo <- FALSE
+    add_prop_norm <- FALSE
   }
   
-
   #-----------------------------------------------------------------------------
   
   ###############
@@ -178,7 +194,7 @@ get_pp <- function(
       
       # Generate predictions from mixed normal
       mn_mod <- res$modlist_valid$mnorm # Extract MN model
-      pred_mnorm <- pred_mnorm(test, mn_mod, plot=F)
+      pred_mnorm <- predict_mnorm(test, mn_mod, plot=F)
       
       # Extract list wiht interpolated x and y values
       res_interp <- res$modlist_valid_interp
@@ -225,15 +241,24 @@ get_pp <- function(
           pred_list[[i]] <- NA # -> add NA
         }
       }
-      
       #----------------------------------------------
       # Calculate likelihood measures of current fold
       #----------------------------------------------
-      # Calculate 'true' likelihood of test set under data-generating Amoroso
-      if (add_prop == TRUE) {
+      # Calculate 'true' likelihood of test set under generating Amoroso
+      if (add_prop_amo == TRUE) {
+        print("add_prop_amo = TRUE")
         true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
         true_logL <- sum(log(true_pred))
         true_medL <- median(true_pred)
+      # Calculate 'true' likelihood of test set under generating normal
+      } else if (add_prop_norm == TRUE) {
+        print("add_prop_norm = TRUE")
+        true_pred <- dnorm(test, genpar[1], genpar[2])
+        true_logL <- sum(log(true_pred))
+        true_medL <- median(true_pred)
+      # Catch other situations (this should not happen)
+      } else {
+        print("add_prop_amo = FALSE and add_prop_norm = FALSE")
       }
       
       # Empty vector to store log-likelihoods for current fold
@@ -287,7 +312,7 @@ get_pp <- function(
       # Add column with median-likelihoods of all methods of current fold
       likelihood_tib[[fold_colname_medL]] <- medL_vec_fold
       # Transform to proportion of "true" likelihood (under data-gen. model)
-      if(add_prop == TRUE) {
+      if(xor(add_prop_norm,add_prop_amo)) {
         likelihood_tib[[fold_colname_logL_prop]] <- logL_vec_fold/true_logL
         likelihood_tib[[fold_colname_medL_prop]] <- medL_vec_fold/true_medL
       }
@@ -297,7 +322,7 @@ get_pp <- function(
     #---------------------------------------------------
     # Calculate average likelihood measures across folds
     #---------------------------------------------------
-    if (add_prop == TRUE) {
+    if(xor(add_prop_norm,add_prop_amo)) {
       
       # -> Likelihood measures expressed as proportion of "true" likelihoods
       
@@ -375,13 +400,24 @@ get_pp <- function(
     # -> prevents zero predictions
     train <- c(train, xmin, xmax)
     
-    #--------------------------------------------------------------------
-    # Calculate log likelihood of test data under data-generating Amoroso
-    #--------------------------------------------------------------------
-    if (add_prop == TRUE) {
+    #---------------------------------------------------------------------------
+    # Calculate log likelihood of test data under data-generating Amoroso/Normal
+    #---------------------------------------------------------------------------
+    # Calculate 'true' likelihood of test set under generating Amoroso
+    if (add_prop_amo == TRUE) {
+      print("add_prop_amo = TRUE")
       true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
       true_logL <- sum(log(true_pred))
       true_medL <- median(true_pred)
+      # Calculate 'true' likelihood of test set under generating normal
+    } else if (add_prop_norm == TRUE) {
+      print("add_prop_norm = TRUE")
+      true_pred <- dnorm(test, genpar[1], genpar[2])
+      true_logL <- sum(log(true_pred))
+      true_medL <- median(true_pred)
+      # Catch other situations (this should not happen)
+    } else {
+      print("add_prop_amo = FALSE and add_prop_norm = FALSE")
     }
     
     #---------------------------------------------------------------
@@ -439,7 +475,7 @@ get_pp <- function(
     
     # Generate predictions from mixed normal
     mn_mod <- res$modlist_valid$mnorm # Extract MN model
-    pred_mnorm <- pred_mnorm(test, mn_mod, plot=F)
+    pred_mnorm <- predict_mnorm(test, mn_mod, plot=F)
     
     # Generate predictions from Amorosos (MLE, Hellinger CDF, Hellinger PDF)
     pred_y_amo_mle <- generate_amo_predictions(test, "amo_mle", res)
@@ -545,7 +581,7 @@ get_pp <- function(
     )
 
     # Express log-likelihood as proportions
-    if(add_prop == TRUE) {
+    if(xor(add_prop_norm, add_prop_amo)) {
       likelihood_tib[["logL_prop_testset"]] <- logL_vec_testset/true_logL
       likelihood_tib[["medL_prop_testset"]] <- medL_vec_testset/true_medL
     }
@@ -568,9 +604,11 @@ get_pp <- function(
 
 #mydata <- rgg4(100, a=4, l=1, c=7, mu=0)
 #(mydata <- rgg4(20, a=-1, l=2, c=2, mu=10))
+mydata <- rnorm(50)
 
 #res <- get_pp(mydata, k=5)
 #res <- get_pp(mydata, k=5, generating_amoroso = c(4,1,7,0))
+res <- get_pp(mydata, k=5, generating_normal = c(0,1))
 #res <- get_pp(mydata, method="split-half")
 #res <- get_pp(mydata, method = "split-half", generating_amoroso = c(4,1,7,0))
 

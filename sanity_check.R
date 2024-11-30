@@ -1,3 +1,8 @@
+# SANITY CHECK:
+
+# When simulating data from Amoroso, ML-Amoroso should - on average - produce
+# the maximum likelihood fit
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 # Source functions

@@ -6,7 +6,7 @@ require(essHist)
 # Function that predicts density for new data from a mixed normal model
 # (coming from densityMclust())
 
-pred_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
+predict_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
   
    # Weight vector (weight of each component)
    propvec <- mod$parameters$pro
@@ -89,7 +89,7 @@ pred_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
 # xvec <- c(3.2,4.5,6.8)
 # 
 # # Predict densities for three new datapoints
-# pred_mnorm(xvec, mod1)
-# pred_mnorm(xvec, mod2)
-# pred_mnorm(xvec, mod3)
+# predict_mnorm(xvec, mod1)
+# predict_mnorm(xvec, mod2)
+# predict_mnorm(xvec, mod3)
 

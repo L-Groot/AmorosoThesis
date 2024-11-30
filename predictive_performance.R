@@ -1,18 +1,39 @@
-
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Source functions
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_amoroso.R"))
+              "heads/main/get_pp.R"))
 
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_bernstein.R"))
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Test all of the methods for many different kinds of data
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_methods.R"))
+##############################
+### Data-generating Normal ###
+##############################
+
+### Small n ###
+n <- 30
+set.seed(28)
+dat <- rnorm(n)
+hist(dat, breaks = 10)
+res <- get_pp(dat)
+res$likelihood_tib_avg %>% arrange(desc(logL_avg))
+
+
+
+
 
 
 ### Predictive performance for normal
 
 n <- 25
-sd <- 10
+mean <- 12
+sd <- 3
 set.seed(80)
 dat <- rnorm(n, mean=100, sd=sd)
 hist(dat,breaks=10)
