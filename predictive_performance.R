@@ -18,13 +18,16 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 
 ### Small n ###
 n <- 30
-set.seed(28)
+set.seed(29)
 dat <- rnorm(n)
 hist(dat, breaks = 10)
 res <- get_pp(dat)
 res$likelihood_tib_avg %>% arrange(desc(logL_avg))
 
 
+
+# -> mixed normal very unsmooth at low n
+# -> MLE Amoroso regularly fits weird spikes at low n -> CDF and PDF do better
 
 
 
