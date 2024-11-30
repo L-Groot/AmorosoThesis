@@ -13,7 +13,7 @@ require(AmoRosoDistrib)
 # -> for Amoroso density function
 require(scdensity) 
 # -> for adjusted KDE
-require(mclust) 
+require(mclust)
 # -> for mixed normal estimation
 require(LaplacesDemon)
 # -> for mixed normal density function

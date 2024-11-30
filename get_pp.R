@@ -34,13 +34,13 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 )
   
-  set.seed(93)
-  dat <- rnorm(50, mean = 30, sd = 7)
-  method = "k-fold"
-  generating_normal = c(30,7)
-  k = 5
-  prop_train = 0.8
-  seed = 125
+  # set.seed(93)
+  # dat <- rnorm(50, mean = 30, sd = 7)
+  # method = "k-fold"
+  # generating_normal = c(30,7)
+  # k = 5
+  # prop_train = 0.8
+  # seed = 125
 {
   
   
