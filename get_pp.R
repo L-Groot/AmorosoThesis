@@ -10,9 +10,7 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/predict_mnorm.R"))
 
 # Load packages
-require(AmoRosoDistrib)
 require(caret)
-require(tidyverse)
 require(essHist)
 
 #-------------------------------------------------------------------------------
@@ -35,13 +33,14 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 )
   
-  # set.seed(93)
-  # dat <- rnorm(50, mean = 30, sd = 7)
-  # method = "k-fold"
-  # generating_normal = c(30,7)
-  # k = 5
-  # prop_train = 0.8
-  # seed = 125
+  set.seed(93)
+  dat <- rnorm(50, mean = 30, sd = 7)
+  method = "k-fold"
+  generating_normal = c(30,7)
+  generating_amoroso = NULL
+  k = 5
+  prop_train = 0.8
+  seed = 125
 {
   
   
@@ -73,6 +72,10 @@ get_pp <- function(
     add_prop_norm <- FALSE
   }
   
+  
+  
+  #-----------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------
   #-----------------------------------------------------------------------------
   
   ###############
@@ -365,236 +368,241 @@ get_pp <- function(
       likelihood_tib_avg = likelihood_tib_avg))
     
     
-  } else {
-    
-    
-    #---------------------------------------------------------------------------
-    
-    ##################
-    ### SPLIT-HALF ###
-    ##################
-    
-    cat("--------------------------------------------------------------\n")
-    cat("Split-half CV (Proportion train = :", prop_train,"\n")
-    cat("--------------------------------------------------------------\n")
-    
-    #-----------------------------
-    # Split data in train and test
-    #-----------------------------
-    # Get min and max value in data
-    xmin <- min(dat)
-    xmax <- max(dat)
-    # Remove them from the data
-    dat_stripped <-  dat[dat != xmin & dat != xmax]
-    # Set seed for reproducible data splitting
-    set.seed(seed)
-    # Split the data without the min and max into train and test
-    inTrain <- createDataPartition(
-      y = dat_stripped,
-      p = prop_train, # prop. of data in the training set
-      list = FALSE
-    )
-    # Split data in train and test
-    train <- c(dat[inTrain],xmin,xmax)
-    test <- dat[-inTrain]
-    # Then add back the min and max to the train set
-    # -> prevents zero predictions
-    train <- c(train, xmin, xmax)
-    
-    #---------------------------------------------------------------------------
-    # Calculate log likelihood of test data under data-generating Amoroso/Normal
-    #---------------------------------------------------------------------------
-    # Calculate 'true' likelihood of test set under generating Amoroso
-    if (add_prop_amo == TRUE) {
-      print("add_prop_amo = TRUE")
-      true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
-      true_logL <- sum(log(true_pred))
-      true_medL <- median(true_pred)
-      # Calculate 'true' likelihood of test set under generating normal
-    } else if (add_prop_norm == TRUE) {
-      print("add_prop_norm = TRUE")
-      true_pred <- dnorm(test, genpar[1], genpar[2])
-      true_logL <- sum(log(true_pred))
-      true_medL <- median(true_pred)
-      # Catch other situations (this should not happen)
-    } else {
-      print("add_prop_amo = FALSE and add_prop_norm = FALSE")
-    }
-    
-    #---------------------------------------------------------------
-    # Initialize vectors to store models with 0 or NA in predictions
-    #---------------------------------------------------------------
-    zero_pred_models <- c()
-    na_pred_models <- c()
-    
-    #--------------------------------------------
-    # Fit Amoroso and NP methods on training data
-    #--------------------------------------------
-    res <- estimate_methods(train, hist = TRUE, breaks = 20)
-    
-    #----------------------------------------------
-    # Create list to store predictions for test set
-    #----------------------------------------------
-    pred_list <- list(rdens = NULL,
-                      bern1 = NULL,
-                      bern2 = NULL,
-                      scKDE_uni = NULL,
-                      scKDE_2inf = NULL,
-                      scKDE_2infplus = NULL,
-                      mnorm = NULL,
-                      amo_mle = NULL,
-                      amo_hell_cdf = NULL,
-                      amo_hell_pdf = NULL)
-    
-    #---------------------------------------------
-    # Generate predictions from parametric methods
-    #---------------------------------------------
-    # Helper function that generates predictions from 3 Amorosos
-    generate_amo_predictions <- function(test, method_name, res) {
-      
-      if (length(res$modlist_valid[[method_name]]) > 1) {
-        
-        # Get parameters
-        pars <- res$modlist_valid[[method_name]]$pars
-        # Generate predictions
-        pred_y <- dgg4(test, pars[1], pars[2], pars[3], pars[4])
-        # Replace NA predictions with 0
-        if (anyNA(pred_y)) {
-          nr_na <- sum(is.na(pred_y))
-          pred_y[is.na(pred_y)] <- 0
-          warning(paste(nr_na, "NA in the", method_name,
-                        "predictions were replaced with zero."))
-        }
-        return(pred_y)
-        
-      } else {
-        
-        return(NA) # Make predictions NA
-        
-      }
-    }
-    
-    # Generate predictions from mixed normal
-    mn_mod <- res$modlist_valid$mnorm # Extract MN model
-    pred_mnorm <- predict_mnorm(test, mn_mod, plot=F)
-    
-    # Generate predictions from Amorosos (MLE, Hellinger CDF, Hellinger PDF)
-    pred_y_amo_mle <- generate_amo_predictions(test, "amo_mle", res)
-    pred_y_amo_hell_cdf <- generate_amo_predictions(test, "amo_hell_cdf", res)
-    pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res)
-    
-    # Get interpolated Amoroso density values
-    res_interp <- res$modlist_valid_interp
-    
-    # Add Amoroso and mixed normal predictions to pred_list
-    pred_list$mnorm <- pred_mnorm
-    pred_list$amo_mle <- pred_y_amo_mle
-    pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
-    pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
-    
-    #------------------------------------------------
-    # Generate predictions from nonparametric methods
-    #------------------------------------------------
-    # Make a list to store continuous functions for the non-parametric fits
-    npfun_list <- list(rdens = NULL,
-                       bern1 = NULL,
-                       bern2 = NULL,
-                       scKDE_uni = NULL,
-                       scKDE_2inf = NULL,
-                       scKDE_2infplus = NULL)
-    
-    # Use splinefun() to make a continuous function from the NP estimates
-    for (i in 1:length(npfun_list)) { #the first 6 fits in res are the np fits
-      if (length(res_interp[[i]]) > 1) { #if the fit is valid, estimate function
-        npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
-                                     res_interp[[i]]$y,
-                                     method = "monoH.FC")
-      } else { #if the fit is not valid, put NA
-        npfun_list[[i]] <- NA
-      }
-    }
-    
-    # Make predicitions from NP methods and add to pred_list
-    for (i in 1:(length(pred_list)-4)) { # leave out parametric methods
-      
-      if(!is.na(npfun_list[i])) { # if the fit is valid:
-        predvec <- npfun_list[[i]](test) # -> add predictions
-        # replace NA predictions with 0
-        predvec[is.na(predvec)] <- 0
-        pred_list[[i]] <- predvec
-        
-      } else { # if the fit is invalid:
-        pred_list[[i]] <- NA # -> add NA
-      }
-    }
-    
-    #----------------------------------------------------------
-    # For each model, calculate likelihood of test observations
-    #----------------------------------------------------------
-    # Remove any models that contain NA predictions
-    pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
-    # Empty vector to store log-likelihoods of test set OF EACH VALID MODEL
-    logL_vec_testset <- numeric(length(pred_list))
-    # Empty vector to store med-likelihoods of test set OF EACH VALID MODEL
-    medL_vec_testset <- numeric(length(pred_list))
-    
-    # Loop through prediction vectors of all methods
-    for (i in seq_along(pred_list)) {
-      
-      pred <- pred_list[[i]]
-      method_name <- names(pred_list)[i]
-      
-      # Calculate likelihood measures for each method
-      # Check for NAs
-      if (any(pred == 0)) {
-        zero_pred_models <- c(zero_pred_models, method_name)
-        warning(paste("Skipping log-likelihood calculation for method:",
-                      method_name, "; Predictions include 0. Still calculating
-                      median likelihood."))
-        # Assign NA to both likelihood measures
-        logL_vec_testset[i] <- NA
-        medL_vec_testset[i] <- median(pred)
-      } else if (anyNA(pred)) {
-        na_pred_models <- append(na_pred_models)
-        warning(paste("Skipping log-likelihood and med-likelihood calculations
-                      for method:", method_name, "; Predictions include NA."))
-        # Assign NA for log-L measure
-        logL_vec_testset[i] <- NA
-        # -> Median likelihood of all methods predictions for the test set
-        medL_vec_testset[i] <- NA
-      } else {
-        # -> Log likelihood of all methods predictions for the test set
-        logL_vec_testset[i] <- sum(log(pred))
-        # -> Median likelihood of all methods predictions for the test set
-        medL_vec_testset[i] <- median(pred) 
-      }
-    }
-    
-    #---------------------------------------
-    # Create tibble with likelihood measures
-    #---------------------------------------
-    
-    # Make tibble with likelihood measures
-    likelihood_tib <- tibble(
-      method = names(pred_list),
-      logL_testset = logL_vec_testset,
-      medL_testset = medL_vec_testset
-    )
-
-    # Express log-likelihood as proportions
-    if(xor(add_prop_norm, add_prop_amo)) {
-      likelihood_tib[["logL_prop_testset"]] <- logL_vec_testset/true_logL
-      likelihood_tib[["medL_prop_testset"]] <- medL_vec_testset/true_medL
-    }
-    
-    #--------------------------------------------
-    # Return tibbles and lists with failed models
-    #--------------------------------------------
-    invisible(list(
-      na_pred_models = na_pred_models,
-      zero_pred_models = zero_pred_models,
-      likelihood_tib = likelihood_tib
-    ))
+  # } else {
+  # 
+  # 
+  # 
+  # 
+  #   #---------------------------------------------------------------------------
+  #   #---------------------------------------------------------------------------
+  #   #---------------------------------------------------------------------------
+  # 
+  #   ##################
+  #   ### SPLIT-HALF ###
+  #   ##################
+  # 
+  #   cat("--------------------------------------------------------------\n")
+  #   cat("Split-half CV (Proportion train = :", prop_train,"\n")
+  #   cat("--------------------------------------------------------------\n")
+  # 
+  #   #-----------------------------
+  #   # Split data in train and test
+  #   #-----------------------------
+  #   # Get min and max value in data
+  #   xmin <- min(dat)
+  #   xmax <- max(dat)
+  #   # Remove them from the data
+  #   dat_stripped <-  dat[dat != xmin & dat != xmax]
+  #   # Set seed for reproducible data splitting
+  #   set.seed(seed)
+  #   # Split the data without the min and max into train and test
+  #   inTrain <- createDataPartition(
+  #     y = dat_stripped,
+  #     p = prop_train, # prop. of data in the training set
+  #     list = FALSE
+  #   )
+  #   # Split data in train and test
+  #   train <- c(dat[inTrain],xmin,xmax)
+  #   test <- dat[-inTrain]
+  #   # Then add back the min and max to the train set
+  #   # -> prevents zero predictions
+  #   train <- c(train, xmin, xmax)
+  # 
+  #   #---------------------------------------------------------------------------
+  #   # Calculate log likelihood of test data under data-generating Amoroso/Normal
+  #   #---------------------------------------------------------------------------
+  #   # Calculate 'true' likelihood of test set under generating Amoroso
+  #   if (add_prop_amo == TRUE) {
+  #     print("add_prop_amo = TRUE")
+  #     true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
+  #     true_logL <- sum(log(true_pred))
+  #     true_medL <- median(true_pred)
+  #     # Calculate 'true' likelihood of test set under generating normal
+  #   } else if (add_prop_norm == TRUE) {
+  #     print("add_prop_norm = TRUE")
+  #     true_pred <- dnorm(test, genpar[1], genpar[2])
+  #     true_logL <- sum(log(true_pred))
+  #     true_medL <- median(true_pred)
+  #     # Catch other situations (this should not happen)
+  #   } else {
+  #     print("add_prop_amo = FALSE and add_prop_norm = FALSE")
+  #   }
+  # 
+  #   #---------------------------------------------------------------
+  #   # Initialize vectors to store models with 0 or NA in predictions
+  #   #---------------------------------------------------------------
+  #   zero_pred_models <- c()
+  #   na_pred_models <- c()
+  # 
+  #   #--------------------------------------------
+  #   # Fit Amoroso and NP methods on training data
+  #   #--------------------------------------------
+  #   res <- estimate_methods(train, hist = TRUE, breaks = 20)
+  # 
+  #   #----------------------------------------------
+  #   # Create list to store predictions for test set
+  #   #----------------------------------------------
+  #   pred_list <- list(rdens = NULL,
+  #                     bern1 = NULL,
+  #                     bern2 = NULL,
+  #                     scKDE_uni = NULL,
+  #                     scKDE_2inf = NULL,
+  #                     scKDE_2infplus = NULL,
+  #                     mnorm = NULL,
+  #                     amo_mle = NULL,
+  #                     amo_hell_cdf = NULL,
+  #                     amo_hell_pdf = NULL)
+  # 
+  #   #---------------------------------------------
+  #   # Generate predictions from parametric methods
+  #   #---------------------------------------------
+  #   # Helper function that generates predictions from 3 Amorosos
+  #   generate_amo_predictions <- function(test, method_name, res) {
+  # 
+  #     if (length(res$modlist_valid[[method_name]]) > 1) {
+  # 
+  #       # Get parameters
+  #       pars <- res$modlist_valid[[method_name]]$pars
+  #       # Generate predictions
+  #       pred_y <- dgg4(test, pars[1], pars[2], pars[3], pars[4])
+  #       # Replace NA predictions with 0
+  #       if (anyNA(pred_y)) {
+  #         nr_na <- sum(is.na(pred_y))
+  #         pred_y[is.na(pred_y)] <- 0
+  #         warning(paste(nr_na, "NA in the", method_name,
+  #                       "predictions were replaced with zero."))
+  #       }
+  #       return(pred_y)
+  # 
+  #     } else {
+  # 
+  #       return(NA) # Make predictions NA
+  # 
+  #     }
+  #   }
+  # 
+  #   # Generate predictions from mixed normal
+  #   mn_mod <- res$modlist_valid$mnorm # Extract MN model
+  #   pred_mnorm <- predict_mnorm(test, mn_mod, plot=F)
+  # 
+  #   # Generate predictions from Amorosos (MLE, Hellinger CDF, Hellinger PDF)
+  #   pred_y_amo_mle <- generate_amo_predictions(test, "amo_mle", res)
+  #   pred_y_amo_hell_cdf <- generate_amo_predictions(test, "amo_hell_cdf", res)
+  #   pred_y_amo_hell_pdf <- generate_amo_predictions(test, "amo_hell_pdf", res)
+  # 
+  #   # Get interpolated Amoroso density values
+  #   res_interp <- res$modlist_valid_interp
+  # 
+  #   # Add Amoroso and mixed normal predictions to pred_list
+  #   pred_list$mnorm <- pred_mnorm
+  #   pred_list$amo_mle <- pred_y_amo_mle
+  #   pred_list$amo_hell_cdf <- pred_y_amo_hell_cdf
+  #   pred_list$amo_hell_pdf <- pred_y_amo_hell_pdf
+  # 
+  #   #------------------------------------------------
+  #   # Generate predictions from nonparametric methods
+  #   #------------------------------------------------
+  #   # Make a list to store continuous functions for the non-parametric fits
+  #   npfun_list <- list(rdens = NULL,
+  #                      bern1 = NULL,
+  #                      bern2 = NULL,
+  #                      scKDE_uni = NULL,
+  #                      scKDE_2inf = NULL,
+  #                      scKDE_2infplus = NULL)
+  # 
+  #   # Use splinefun() to make a continuous function from the NP estimates
+  #   for (i in 1:length(npfun_list)) { #the first 6 fits in res are the np fits
+  #     if (length(res_interp[[i]]) > 1) { #if the fit is valid, estimate function
+  #       npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
+  #                                    res_interp[[i]]$y,
+  #                                    method = "monoH.FC")
+  #     } else { #if the fit is not valid, put NA
+  #       npfun_list[[i]] <- NA
+  #     }
+  #   }
+  # 
+  #   # Make predicitions from NP methods and add to pred_list
+  #   for (i in 1:(length(pred_list)-4)) { # leave out parametric methods
+  # 
+  #     if(!is.na(npfun_list[i])) { # if the fit is valid:
+  #       predvec <- npfun_list[[i]](test) # -> add predictions
+  #       # replace NA predictions with 0
+  #       predvec[is.na(predvec)] <- 0
+  #       pred_list[[i]] <- predvec
+  # 
+  #     } else { # if the fit is invalid:
+  #       pred_list[[i]] <- NA # -> add NA
+  #     }
+  #   }
+  # 
+  #   #----------------------------------------------------------
+  #   # For each model, calculate likelihood of test observations
+  #   #----------------------------------------------------------
+  #   # Remove any models that contain NA predictions
+  #   pred_list <- pred_list[!sapply(pred_list, function(x) any(is.na(x)))]
+  #   # Empty vector to store log-likelihoods of test set OF EACH VALID MODEL
+  #   logL_vec_testset <- numeric(length(pred_list))
+  #   # Empty vector to store med-likelihoods of test set OF EACH VALID MODEL
+  #   medL_vec_testset <- numeric(length(pred_list))
+  # 
+  #   # Loop through prediction vectors of all methods
+  #   for (i in seq_along(pred_list)) {
+  # 
+  #     pred <- pred_list[[i]]
+  #     method_name <- names(pred_list)[i]
+  # 
+  #     # Calculate likelihood measures for each method
+  #     # Check for NAs
+  #     if (any(pred == 0)) {
+  #       zero_pred_models <- c(zero_pred_models, method_name)
+  #       warning(paste("Skipping log-likelihood calculation for method:",
+  #                     method_name, "; Predictions include 0. Still calculating
+  #                     median likelihood."))
+  #       # Assign NA to both likelihood measures
+  #       logL_vec_testset[i] <- NA
+  #       medL_vec_testset[i] <- median(pred)
+  #     } else if (anyNA(pred)) {
+  #       na_pred_models <- append(na_pred_models)
+  #       warning(paste("Skipping log-likelihood and med-likelihood calculations
+  #                     for method:", method_name, "; Predictions include NA."))
+  #       # Assign NA for log-L measure
+  #       logL_vec_testset[i] <- NA
+  #       # -> Median likelihood of all methods predictions for the test set
+  #       medL_vec_testset[i] <- NA
+  #     } else {
+  #       # -> Log likelihood of all methods predictions for the test set
+  #       logL_vec_testset[i] <- sum(log(pred))
+  #       # -> Median likelihood of all methods predictions for the test set
+  #       medL_vec_testset[i] <- median(pred)
+  #     }
+  #   }
+  # 
+  #   #---------------------------------------
+  #   # Create tibble with likelihood measures
+  #   #---------------------------------------
+  # 
+  #   # Make tibble with likelihood measures
+  #   likelihood_tib <- tibble(
+  #     method = names(pred_list),
+  #     logL_testset = logL_vec_testset,
+  #     medL_testset = medL_vec_testset
+  #   )
+  # 
+  #   # Express log-likelihood as proportions
+  #   if(xor(add_prop_norm, add_prop_amo)) {
+  #     likelihood_tib[["logL_prop_testset"]] <- logL_vec_testset/true_logL
+  #     likelihood_tib[["medL_prop_testset"]] <- medL_vec_testset/true_medL
+  #   }
+  # 
+  #   #--------------------------------------------
+  #   # Return tibbles and lists with failed models
+  #   #--------------------------------------------
+  #   invisible(list(
+  #     na_pred_models = na_pred_models,
+  #     zero_pred_models = zero_pred_models,
+  #     likelihood_tib = likelihood_tib
+  #   ))
+  # }
   }
 }
 
