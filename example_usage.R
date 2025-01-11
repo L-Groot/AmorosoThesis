@@ -120,9 +120,9 @@ glimpse(res$modlist_valid)
 #-> list of all valid models, interpolated to cover the same x range
 glimpse(res$modlist_valid_interp)
 
-# For example, we can extract the x and y values from the Bernstein method
-glimpse(res$modlist$bern1$x)
-glimpse(res$modlist$bern1$y)
+# For example, we can extract the x and y values from the ML Amoroso
+glimpse(res$modlist$amo_mle$x)
+glimpse(res$modlist$amo_mle$y)
 
 
 # We can also add the true data-generating normal distribution

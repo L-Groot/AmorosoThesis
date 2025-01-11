@@ -13,6 +13,7 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 require(AmoRosoDistrib)
 require(caret)
 require(tidyverse)
+require(essHist)
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
