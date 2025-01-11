@@ -92,7 +92,7 @@ estimate_methods <- function(dat = NULL,
   
   ##### Mixed Normal #####
   mnorm <- safe_execute(quote(
-    densityMclust(dat)), "mnorm", dat)
+    densityMclust(dat,plot=F)), "mnorm", dat)
   xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
   mnorm$x <- xy_ordered_df$x
   mnorm$y <- xy_ordered_df$y
