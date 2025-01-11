@@ -381,8 +381,8 @@ estimate_methods <- function(dat = NULL,
 
 #data <- palmerpenguins::penguins$bill_depth_mm
 #dat <- palmerpenguins::penguins$bill_length_mm
-dat <- palmerpenguins::penguins$flipper_length_mm
-dat <- na.omit(palmerpenguins::penguins$flipper_length_mm)
+#dat <- palmerpenguins::penguins$flipper_length_mm
+#dat <- na.omit(palmerpenguins::penguins$flipper_length_mm)
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
@@ -392,7 +392,7 @@ dat <- na.omit(palmerpenguins::penguins$flipper_length_mm)
 #data <- rnorm(70, mean = 4, sd = 0.7)
 #data <- rgg4(40, a=4, l=1, c=7, mu=0)
 
-res1 <- estimate_methods_2(dat = dat, plot_common_x = TRUE)
+#res1 <- estimate_methods(dat = dat, plot_common_x = TRUE)
 #res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
 

@@ -12,9 +12,6 @@ library(BayesMultiMode)
 #set.seed(25)
 y <- rnorm(100)
 
-set.seed(25)
-y <- rnorm(100)
-
 ## Bimodal
 #set.seed(123)
 # data1 <- rnorm(100, mean = 5, sd = 1)
