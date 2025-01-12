@@ -15,7 +15,7 @@ make_hist <- function() {
 # Simulate data from standard normal
 n <- 100
 set.seed(12)
-x <- rnorm(n)
+x <- rnorm(n, 175, 7 )
 range(x)
 
 # Fit methods
@@ -29,10 +29,10 @@ adjKDE <- scdensity(x, constraint = "twoInflections+")
 #################
 
 # Set x range for plots
-xmin <- -3
-xmax <- 3
+xmin <- 150
+xmax <- 200
 #xx <- seq(min(density(x)$x), max(density(x)$x), length = n)
-xx <- seq(-3, 3, length = 512)
+xx <- seq(xmin, xmax, length = 512)
 
 # Set y range for plots based on R density() fit
 ybuffer <- 0.6*(range(rdens$y)[2]-range(rdens$y)[1])
@@ -44,9 +44,9 @@ par(mfrow = c(1,1), cex.main = 1.4, mar = c(4,4,0,0), cex.axis = 1,
     cex.lab = 1.2, bty = "n", font.lab = 2,
     family = "Times New Roman")
 # -> 2x3 grid
-par(mfrow = c(2,3), oma = c(2, 2, 2, 2), mar = c(3,3,1,1), cex.axis = 1,
-    cex.main = 1.4, cex.lab = 1.2, bty = "n", font.lab = 2,
-    family = "Times New Roman")
+# par(mfrow = c(2,3), oma = c(2, 2, 2, 2), mar = c(4,4,1,1), cex.axis = 1,
+#     cex.main = 1.4, cex.lab = 1.2, bty = "n", font.lab = 2,
+#     family = "Times New Roman")
 
 # Plot R density fit
 make_hist()
