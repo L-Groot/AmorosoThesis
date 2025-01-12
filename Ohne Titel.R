@@ -1,34 +1,112 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_methods.R"))
+              "heads/main/estimate_amoroso.R"))
 
-#install.packages("quadprog")
-#install.packages("scdensity")
-#install.packages("LaplacesDemon")
-#install.packages("devtools")
-#devtools::install_github("ccombesGG4/AmoRosoDistrib")
-
-
-dat <- rnorm(100)
-
-densityMclust(dat, plot = F)
-
-?densityMclust
-
-
-safe_execute <- function(expr, object_name, data_vector) {
-  tryCatch(
-    {
-      result <- eval(bquote(.(expr)), envir = list(dat = data_vector))
-      return(result)
-    },
-    error = function(e) {
-      cat(paste("Error with fitting", object_name, ":", e$message, ";\n",
-                "Other methods were still fit.\n"))
-      return(NA) # assigns NA if method failed
-    }
-  )
+# Convenience function to make histogram
+make_hist <- function() {
+  
+  hist(x, xlim = c(xmin, xmax), ylim = c(0,ymax),
+       probability = TRUE, main = "", breaks = 20, axes = FALSE,
+       col = "grey95", border = "grey85")
+  axis(1)
+  axis(2, las = 1)
+  
 }
-mnorm <- safe_execute(quote(
-  densityMclust(dat,plot=F)), "mnorm", dat)
 
-              
+# Simulate data from standard normal
+n <- 100
+set.seed(12)
+x <- rnorm(n)
+range(x)
+
+# Fit methods
+rdens <- density(x)
+amo <- estimate_amoroso(x, plot = F)
+mnorm <- densityMclust(x, plot=F)
+adjKDE <- scdensity(x, constraint = "twoInflections+")
+
+#################
+### Plot fits ###
+#################
+
+# Set x range for plots
+xmin <- -3
+xmax <- 3
+#xx <- seq(min(density(x)$x), max(density(x)$x), length = n)
+xx <- seq(-3, 3, length = 512)
+
+# Set y range for plots based on R density() fit
+ybuffer <- 0.6*(range(rdens$y)[2]-range(rdens$y)[1])
+ymax <- max(rdens$y)+ybuffer
+
+# Settings
+# -> single plot
+par(mfrow = c(1,1), cex.main = 1.4, mar = c(4,4,0,0), cex.axis = 1,
+    cex.lab = 1.2, bty = "n", font.lab = 2,
+    family = "Times New Roman")
+# -> 2x3 grid
+par(mfrow = c(2,3), oma = c(2, 2, 2, 2), mar = c(3,3,1,1), cex.axis = 1,
+    cex.main = 1.4, cex.lab = 1.2, bty = "n", font.lab = 2,
+    family = "Times New Roman")
+
+# Plot R density fit
+make_hist()
+lines(rdens$x, rdens$y, col = "black", lty = 1, lwd = 2)
+
+# Plot mixed normal
+xy_ordered <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
+mnorm$x <- xy_ordered$x
+mnorm$y <- xy_ordered$y
+
+make_hist()
+points(mnorm$x, mnorm$y,
+       type = "l", lwd = 2, col = "black", lty = 1)
+
+# Plot adjusted KDE
+make_hist()
+points(adjKDE$x, adjKDE$y,
+       type = "l", lwd = 2, col = "black", lty = 1)
+
+# Plot Amoroso MLE fit
+pars <- amo$min_BIC_models %>%
+  filter(method_ID == "MLE") %>%
+  select(a,l,c,mu) %>%
+  as.numeric()
+
+make_hist()
+points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
+       type = "l", lwd = 2, col = "black", lty = 1)
+
+# Plot Amoroso Hell-CDF fit
+pars <- amo$min_BIC_models %>%
+  filter(method_ID == "HELL-CDF") %>%
+  select(a,l,c,mu) %>%
+  as.numeric()
+
+make_hist()
+points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
+       type = "l", lwd = 2, col = "black", lty = 1)
+
+# Plot Amoroso Hell-PDF fit
+pars <- amo$min_BIC_models %>%
+  filter(method_ID == "HELL-PDF") %>%
+  select(a,l,c,mu) %>%
+  as.numeric()
+
+make_hist()
+points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
+       type = "l", lwd = 2, col = "black", lty = 1)
+
+
+#-------------------------------------------------------------------------------
+# Check ranges
+range(rdens$x)
+range(amo$x)
+range(mnorm$x)
+range(adjKDE$x)
+
+# Code for interpolation
+# -> interpolated
+# y_interp <- approx(mnorm$x, mnorm$y, xout = xx, rule = 1)$y
+# y_interp[is.na(y_interp)] <- 0
+# points(xx, y_interp,
+#        type = "l", lwd = 2, col = "black", lty = 1)
