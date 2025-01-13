@@ -34,9 +34,9 @@ get_pp <- function(
 )
 
 # set.seed(93)
-# dat <- rnorm(50, mean = 30, sd = 7)
+# dat <- rnorm(100, 175, 7)
 # method = "k-fold"
-# generating_normal = c(30,7)
+# generating_normal = NULL
 # generating_amoroso = NULL
 # k = 5
 # prop_train = 0.8
