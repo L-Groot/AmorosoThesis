@@ -33,13 +33,13 @@ estimate_methods <- function(dat = NULL,
 ) {
   
   ## For testing
-  dat = rnorm(70)
-  plot = TRUE; hist = TRUE; breaks = 20
-  minimal = FALSE
-  plot_common_x = TRUE
-  main = NULL
-  generatingnormal = NULL # supply (mean,sd)
-  amorosocrit = "ML"; xticks = NULL
+  # dat = rnorm(70)
+  # plot = TRUE; hist = TRUE; breaks = 20
+  # minimal = FALSE
+  # plot_common_x = TRUE
+  # main = NULL
+  # generatingnormal = NULL # supply (mean,sd)
+  # amorosocrit = "ML"; xticks = NULL
   
   ########################
   ### HELPER FUNCTION  ###
