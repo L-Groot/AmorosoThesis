@@ -1,5 +1,9 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/estimate_methods.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/get_pp.R"))
 
 # Convenience function to make histogram
 make_hist <- function() {
@@ -14,9 +18,11 @@ make_hist <- function() {
 
 # Simulate data from standard normal
 n <- 100
+mean = 175
+sd <- 7
 set.seed(12)
-x <- rnorm(n, 175, 7 )
-range(x)
+x <- rnorm(n, mean, sd)
+#x <- x[1:80]
 
 # Fit methods
 rdens <- density(x)
@@ -50,7 +56,11 @@ par(mfrow = c(1,1), cex.main = 1.4, mar = c(4,4,0,0), cex.axis = 1,
 
 # Plot R density fit
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 lines(rdens$x, rdens$y, col = "black", lty = 1, lwd = 2)
+#lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
+#points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
+#       type = "l", lwd = 2, col = "magenta2", lty = 1)
 
 # Plot mixed normal
 xy_ordered <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
@@ -58,11 +68,13 @@ mnorm$x <- xy_ordered$x
 mnorm$y <- xy_ordered$y
 
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(mnorm$x, mnorm$y,
        type = "l", lwd = 2, col = "black", lty = 1)
 
 # Plot adjusted KDE
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(adjKDE$x, adjKDE$y,
        type = "l", lwd = 2, col = "black", lty = 1)
 
@@ -73,6 +85,7 @@ pars <- amo$min_BIC_models %>%
   as.numeric()
 
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
        type = "l", lwd = 2, col = "black", lty = 1)
 
@@ -83,6 +96,7 @@ pars <- amo$min_BIC_models %>%
   as.numeric()
 
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
        type = "l", lwd = 2, col = "black", lty = 1)
 
@@ -93,16 +107,19 @@ pars <- amo$min_BIC_models %>%
   as.numeric()
 
 make_hist()
+lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
        type = "l", lwd = 2, col = "black", lty = 1)
 
 
 #-------------------------------------------------------------------------------
 # Check ranges
-range(rdens$x)
-range(amo$x)
-range(mnorm$x)
-range(adjKDE$x)
+# range(rdens$x)
+# range(amo$x)
+# range(mnorm$x)
+# range(adjKDE$x)
+
+get_pp(x)
 
 # Code for interpolation
 # -> interpolated

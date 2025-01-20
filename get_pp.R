@@ -195,7 +195,7 @@ get_pp <- function(
       mn_mod <- res$modlist_valid$mnorm # Extract MN model
       pred_mnorm <- predict_mnorm(test, mn_mod, plot=F)
       
-      # Extract list wiht interpolated x and y values
+      # Extract list with interpolated x and y values
       res_interp <- res$modlist_valid_interp
       
       # Add Amoroso and Mixed Normal predictions to pred_list
