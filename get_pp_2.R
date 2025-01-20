@@ -4,7 +4,7 @@
 
 # Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_methods.R"))
+              "heads/main/estimate_methods_2.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/predict_mnorm.R"))
 
