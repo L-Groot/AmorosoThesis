@@ -1,6 +1,6 @@
-# estimate_methods 2
-# -> remove Bernstein
-# -> remove adj. KDE "unimodal and adj KDE "twoInflections+"
+# -> reduced the nr of methods from 9 to 6
+# -> removed Bernstein
+# -> removed adj. KDE "unimodal and adj KDE "twoInflections+"
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -23,13 +23,13 @@ require(LaplacesDemon)
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-estimate_methods_2 <- function(dat = NULL,
+estimate_methods_old <- function(dat = NULL,
                              plot = TRUE, hist = TRUE, breaks = 20,
                              minimal = FALSE,
                              plot_common_x = TRUE,
                              main = NULL,
                              generatingnormal = NULL, # supply (mean,sd)
-                             amorosocrit = "ML", xticks = NULL
+                             xticks = NULL
 ) {
   
   ## For testing
@@ -39,7 +39,7 @@ estimate_methods_2 <- function(dat = NULL,
   # plot_common_x = TRUE
   # main = NULL
   # generatingnormal = NULL # supply (mean,sd)
-  # amorosocrit = "ML"; xticks = NULL
+  # xticks = NULL
   
   ########################
   ### HELPER FUNCTION  ###
@@ -92,10 +92,13 @@ estimate_methods_2 <- function(dat = NULL,
   
   ##### Mixed Normal #####
   mnorm <- safe_execute(quote(
-    densityMclust(dat, plot=F)), "mnorm", dat)
-  xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
-  mnorm$x <- xy_ordered_df$x
-  mnorm$y <- xy_ordered_df$y
+    densityMclust(dat,plot=F)), "mnorm", dat)
+  # If fitting mixed normal didn't fail, add x and y
+  if(length(mnorm) > 1) {
+    xy_ordered <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
+    mnorm$x <- xy_ordered$x
+    mnorm$y <- xy_ordered$y
+  }
   
   
   ############################
@@ -205,6 +208,7 @@ estimate_methods_2 <- function(dat = NULL,
   xrange <- xmax_dat-xmin_dat
   xmin_plot <- xmin_dat-0.15*xrange
   xmax_plot <- xmax_dat+0.15*xrange
+  
   
   #####################
   ### 4. MAKE PLOTS ###
@@ -381,6 +385,7 @@ estimate_methods_2 <- function(dat = NULL,
 #data <- palmerpenguins::penguins$bill_depth_mm
 #dat <- palmerpenguins::penguins$bill_length_mm
 #dat <- palmerpenguins::penguins$flipper_length_mm
+#dat <- na.omit(palmerpenguins::penguins$flipper_length_mm)
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
@@ -390,8 +395,6 @@ estimate_methods_2 <- function(dat = NULL,
 #data <- rnorm(70, mean = 4, sd = 0.7)
 #data <- rgg4(40, a=4, l=1, c=7, mu=0)
 
-#res1 <- estimate_methods_2(dat = dat, plot_common_x = TRUE)
+#res1 <- estimate_methods(dat = data, plot_common_x = TRUE)
 #res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
-
-#names(res1$modlist_valid_interp)
