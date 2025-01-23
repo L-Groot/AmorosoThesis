@@ -1,7 +1,7 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/predict_mnorm.R"))
+              "heads/main/mnorm_functions.R"))
 
 library(caret)
 
