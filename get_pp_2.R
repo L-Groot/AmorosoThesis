@@ -41,6 +41,12 @@ get_pp <- function(
     seed = 125 # seed to make fold creation reproducible
 ) {
   
+  dat <- rnorm(100)
+  k <- 2
+  generating_amoroso <- NULL
+  generating_amoroso <- NULL
+  seed <- 24
+  
   cat("--------------------------------------------------\n")
   cat("k-fold cross-validation with k =", k, "\n")
   cat("--------------------------------------------------\n")
@@ -261,5 +267,5 @@ get_pp <- function(
 
 #------
 dat <- rnorm(100,175,7)
-get_pp(dat)
+res <- get_pp(dat)
 
