@@ -8,16 +8,8 @@ library(caret)
 #-------------------------------------------------------------------------------
 get_pp <- function(
     dat, method = "k-fold", k = 5, prop_train = 0.8,
-    generating_amoroso = NULL, generating_normal = NULL, seed = 125
-) {
-  
-  dat <- rnorm(100,6,2)
-  method = "k-fold"
-  k = 5
-  prop_train = 0.5
-  generating_amoroso = NULL
-  generating_normal = c(6,2)
-  seed = 125
+    generating_amoroso = NULL, generating_normal = NULL, seed = 125)
+  {
   
   #-----------------------------------------------------------------------------
   validate_inputs <- function() {
@@ -43,10 +35,6 @@ get_pp <- function(
     }
     return(list(genpar = genpar, gendist = gendist))
   }
-  
-  #-----------------------------------------------------------------------------
-  genpar <- validate_inputs()$genpar
-  gendist <- validate_inputs()$gendist
   
   #-----------------------------------------------------------------------------
   calculate_true_likelihood <- function(test, parameters, distribution) {
@@ -76,8 +64,6 @@ get_pp <- function(
     
     res <- estimate_methods(train, hist = TRUE)
     res_interp <- res$modlist_valid_interp
-    
-    cat("mnorm predictions: ", predict_mnorm(test, res$modlist_valid$mnorm, plot = FALSE), "\n\n")
     
     pred_list <- list(
       mnorm = predict_mnorm(test, res$modlist_valid$mnorm, plot = FALSE),
@@ -149,14 +135,12 @@ get_pp <- function(
                prop_tru_medL = medL/true_likelihoods$medL)
     }
     
-    print(pred_likelihoods)
-    
     # Return pred_likelihoods
     return(pred_likelihoods)
   }
   
   #-----------------------------------------------------------------------------
-  run_kfold <- function(dat, k, genpar, gendist,
+  run_kfold <- function(dat, k = 5, genpar, gendist,
                         np_methods = c("rdens", "scKDE_2infplus")) {
     
     # Remove min and max from data
@@ -174,12 +158,13 @@ get_pp <- function(
     logL_prop_results <- list()
     medL_prop_results <- list()
     
-    # Perform k-fold CV and manually add min and max to each training set
+    # Perform k-fold CV
     for (fold in seq_len(k)) {
       cat("Processing fold", fold, "\n")
       
       # Prepare train and test sets
       train <- c(min(dat), dat_stripped[folds[[fold]]], max(dat))
+      # -> always add min and max to train set
       test <- dat_stripped[-folds[[fold]]]
       
       # Get predictions for the current fold's test data
@@ -196,28 +181,33 @@ get_pp <- function(
     # Combine results into data frames
     logL_df <- as.data.frame(do.call(cbind, logL_results))
     medL_df <- as.data.frame(do.call(cbind, medL_results))
-    logL_prop_df <- as.data.frame(do.call(cbind, logL_prop_results))
-    medL_prop_df <- as.data.frame(do.call(cbind, medL_prop_results))
-    
+
     # Rename columns to indicate folds
     colnames(logL_df) <- paste0("logL_f", seq_len(k))
     colnames(medL_df) <- paste0("medL_f", seq_len(k))
-    colnames(logL_prop_df) <- paste0("logL_prop_f", seq_len(k))
-    colnames(medL_prop_df) <- paste0("medL_prop_f", seq_len(k))
     
     # Add average columns for each measure
     logL_df$avg_logL <- rowMeans(logL_df)
     medL_df$avg_medL <- rowMeans(medL_df)
-    logL_prop_df$avg_logL_prop <- rowMeans(logL_prop_df)
-    medL_prop_df$avg_medL_prop <- rowMeans(medL_prop_df)
     
     # Combine both logL and medL into one data frame (if required)
     avg_likelihoods_df <- data.frame(logL_avg = logL_df$avg_logL,
-                                     med_avg = medL_df$avg_medL,
-                                     logL_prop_avg = logL_prop_df$avg_logL_prop,
-                                     medL_prop_avg = medL_prop_df$avg_medL_prop)
+                                     med_avg = medL_df$avg_medL)
     rownames(avg_likelihoods_df) <- rownames(likelihoods)
     
+    # If true distribution is supplied, add proportion measures
+    if (!is.null(gendist)) {
+      logL_prop_df <- as.data.frame(do.call(cbind, logL_prop_results))
+      medL_prop_df <- as.data.frame(do.call(cbind, medL_prop_results))
+      colnames(logL_prop_df) <- paste0("logL_prop_f", seq_len(k))
+      colnames(medL_prop_df) <- paste0("medL_prop_f", seq_len(k))
+      logL_prop_df$avg_logL_prop <- rowMeans(logL_prop_df)
+      medL_prop_df$avg_medL_prop <- rowMeans(medL_prop_df)
+      avg_likelihoods_df$logL_prop_avg <- logL_prop_df$avg_logL_prop
+      avg_likelihoods_df$medL_prop_avg <- medL_prop_df$avg_medL_prop
+    }
+    
+    # Return dataframe with average likelihood measures across folds
     return(avg_likelihoods_df)
   }
   
@@ -227,15 +217,26 @@ get_pp <- function(
     
     set.seed(seed)
     
-    # Sample a train set until both min and max are in it
-    while (TRUE) {
-      inTrain <- createDataPartition(dat, p = prop_train, list = FALSE)
-      train <- dat[inTrain]
-      if (all(c(min(dat), max(dat)) %in% train)) break
+    # Create initial train/test split
+    inTrain <- createDataPartition(dat, p = prop_train, list = FALSE)
+    train <- dat[inTrain]
+    test <- dat[-inTrain]
+    
+    # Ensure both min and max are in the train set
+    dat_min <- min(dat)
+    dat_max <- max(dat)
+    
+    # If min not yet in train, move it from test to train
+    if (!(dat_min %in% train)) {
+      train <- c(train, dat_min)
+      test <- test[test != dat_min]
     }
     
-    # Make the remaining observations the test set
-    test <- dat[-inTrain]
+    # If max not yet in train, move it from test to train
+    if (!(dat_max %in% train)) {
+      train <- c(train, dat_max)
+      test <- test[test != dat_max]
+    }
     
     # Fit methods to train set, make predictions for test set and calculate
     # likelihood measures of the predictions
@@ -243,10 +244,14 @@ get_pp <- function(
     
     likelihoods_df <- data.frame(
       logL = res_likelihoods$logL,
-      medL = res_likelihoods$medL,
-      logL_prop = res_likelihoods$prop_tru_logL,
-      medL_prop = res_likelihoods$prop_tru_medL
+      medL = res_likelihoods$medL
     )
+    
+    # If proportions were calculated, add the two columns to df
+    if (length(res_likelihoods) > 2) {
+      likelihoods_df$logL_prop_avg <- res_likelihoods$prop_tru_logL
+      likelihoods_df$medL_prop_avg <-  res_likelihoods$prop_tru_medL
+    }
     
     rownames(likelihoods_df) <- rownames(res_likelihoods)
     
@@ -278,7 +283,7 @@ get_pp <- function(
       
       # Make train and test sets
       test <- dat[i]
-      cat("test: ", test)
+
       train <- dat[-i]
       
       # Get predictions for the current test observation
@@ -309,7 +314,7 @@ get_pp <- function(
                                      med_avg = medL_df$avg_medL)
     
     # If proportions were calculated, add the two columns to df
-    if (length(logL_prop_df) == 18 && length(medL_prop_df) == 18) {
+    if (length(logL_prop_df) > 1 && length(medL_prop_df) > 1) {
       avg_likelihoods_df$logL_prop_avg <- logL_prop_df$avg_logL_prop
       avg_likelihoods_df$medL_prop_avg <- medL_prop_df$avg_medL_prop
     }
@@ -322,21 +327,22 @@ get_pp <- function(
   }
   
   #-----------------------------------------------------------------------------
-  validate_inputs()
-  genpar <- if (!is.null(generating_amoroso)) generating_amoroso else generating_normal
-  gendist <- if (!is.null(generating_amoroso)) "amoroso" else "normal"
-  
-  #-----------------------------------------------------------------------------
-  
+  genpar <- validate_inputs()$genpar
+  gendist <- validate_inputs()$gendist
+
   if (method == "k-fold") {
-    run_kfold(dat, k, genpar, gendist)
+    res <- run_kfold(dat, k, genpar, gendist)
   } else if (method == "split-half") {
-    run_splithalf(dat, prop_train, genpar, gendist)
+    res <- run_splithalf(dat, prop_train, genpar, gendist)
+  } else if (method == "LOOCV") {
+    res <- run_loocv(dat, genpar, gendist)
   } else {
-    stop("Invalid method. Use 'k-fold' or 'split-half'.")
+    stop("Invalid method. Use 'k-fold','split-half' or 'LOOCV'.")
   }
+  
+  return(res)
+  
 }
 
-
-#-----
-
+dat <- rnorm(10)
+res <- get_pp(dat, method = "LOOCV", generating_normal = c(0,1))
