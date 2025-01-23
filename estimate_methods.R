@@ -8,6 +8,8 @@
 # -> for estimating Amoroso
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/predict_mnorm.R"))
 
 # Load packages
 # -> for Amoroso density function
@@ -166,6 +168,10 @@ estimate_methods <- function(dat = NULL,
   
   # Define x range
   xvals <- seq(xmin, xmax, length.out = 512)
+  
+  # Make mixed normal density estimate at same resolution as others
+  mnorm$x <- xvals
+  mnorm$y <- predict_mnorm(xvals,mnorm,plot=F)
   
   # Get ymin and ymax across all valid models
   ymaxes <- sort(sapply(modlist_valid, function(mod) max(mod$y)),
@@ -395,3 +401,6 @@ estimate_methods <- function(dat = NULL,
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
 
 #names(res1$modlist_valid_interp)
+
+estimate_methods(dat)
+dat

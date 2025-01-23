@@ -4,7 +4,7 @@
 
 # Source functions
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/estimate_methods_2.R"))
+              "heads/main/estimate_methods.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/predict_mnorm.R"))
 
@@ -38,13 +38,11 @@ get_pp <- function(
     k = 5, # nr of folds
     generating_amoroso = NULL, 
     generating_normal = NULL,
-    n_repetitions = 10, # number of repetitions for k-fold CV
     seed = 125 # seed to make fold creation reproducible
 ) {
   
   cat("--------------------------------------------------\n")
-  cat("Repeated k-fold cross-validation with k =", k, "\n")
-  cat("Number of repetitions =", n_repetitions, "\n")
+  cat("k-fold cross-validation with k =", k, "\n")
   cat("--------------------------------------------------\n")
   
   #---------------------------------------------------------------------------
@@ -69,275 +67,199 @@ get_pp <- function(
     } else stop("Normal parameters must be 2 numbers (mean, sd)")
   }
   
-  # Initialize list to store results from each repetition
-  repetition_results <- list()
+  #------------------------
+  # Split data into k folds
+  #------------------------
+  # Get min and max value in data
+  xmin <- min(dat)
+  xmax <- max(dat)
+  # Remove them from the data
+  dat_stripped <- dat[dat != xmin & dat != xmax]
+  # -> we do this to ensure that the density estimates are guaranteed to cover
+  # the range of the and no zero likelihoods occur (we can't take log(0))
+  # Divide data without min and max into folds
+  set.seed(seed)
+  folds <- createFolds(dat_stripped, k = k, list = TRUE, returnTrain = TRUE)
   
-  # Loop through repetitions
-  for(rep in 1:n_repetitions) {
-    cat("\nRepetition", rep, "of", n_repetitions, "\n")
+  #------------------------------------------------
+  # Initialize tibble to store results of all folds
+  #------------------------------------------------
+  likelihood_tib <- tibble(
+    method = c("rdens","scKDE_2infplus","mnorm",
+               "amo_mle", "amo_hell_cdf", "amo_hell_pdf")
+  )
+  
+  #---------------------------------------------------------------
+  # Initialize vectors to store models with 0 or NA in predictions
+  #---------------------------------------------------------------
+  zero_pred_models <- c()
+  na_pred_models <- c()
+  
+  #-------------------
+  # Loop through folds
+  #-------------------
+  for (fold in 1:k) {
     
-    # Create new seed for this repetition
-    rep_seed <- seed + rep
-    set.seed(rep_seed)
+    #------------------------------------------
+    # Make train and test data for current fold
+    #------------------------------------------
+    cat("\nfold =", fold, "\n")
+    # Extract train data for current fold (from k-1 folds)
+    train_indices <- folds[[fold]]
+    train <- dat_stripped[train_indices]
+    # Add the min and max data value to the train data
+    train <- c(xmin,train,xmax)
+    # Extract test data (from the remaining fold)
+    test <- dat_stripped[-train_indices]
+    cat("n =", length(train), "in train set;",
+        "n =", length(test), "in test set\n")
     
-    #------------------------
-    # Split data into k folds
-    #------------------------
-    # Get min and max value in data
-    xmin <- min(dat)
-    xmax <- max(dat)
-    # Remove them from the data
-    dat_stripped <- dat[dat != xmin & dat != xmax]
-    # -> we do this to ensure that the density estimates are guaranteed to cover
-    # the range of the and no zero likelihoods occur (we can't take log(0))
-    # Divide data without min and max into folds
-    folds <- createFolds(dat_stripped, k = k, list = TRUE, returnTrain = TRUE)
+    #-----------------------------------
+    # Fit P and NP methods to train data
+    #-----------------------------------
+    res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
     
-    #------------------------------------------------
-    # Initialize tibble to store results of all folds
-    #------------------------------------------------
-    likelihood_tib <- tibble(
-      method = c("rdens","scKDE_2infplus","mnorm",
-                 "amo_mle", "amo_hell_cdf", "amo_hell_pdf")
-    )
+    #-----------------------------------------------
+    # Make a list to store predictions for test fold
+    #-----------------------------------------------
+    pred_list <- list(rdens = NULL,
+                      scKDE_2infplus = NULL,
+                      mnorm = NULL,
+                      amo_mle = NULL,
+                      amo_hell_cdf = NULL,
+                      amo_hell_pdf = NULL)
     
-    #---------------------------------------------------------------
-    # Initialize vectors to store models with 0 or NA in predictions
-    #---------------------------------------------------------------
-    zero_pred_models <- c()
-    na_pred_models <- c()
+    #--------------------------------
+    # Generate parametric predictions
+    #--------------------------------
+    # Generate predictions
+    pred_list$amo_mle <- generate_amo_predictions(
+      test, "amo_mle", res, fold)
+    pred_list$amo_hell_cdf <- generate_amo_predictions(
+      test, "amo_hell_cdf", res, fold)
+    pred_list$amo_hell_pdf <- generate_amo_predictions(
+      test, "amo_hell_pdf", res, fold)
     
-    #-------------------
-    # Loop through folds
-    #-------------------
-    for (fold in 1:k) {
-      
-      #------------------------------------------
-      # Make train and test data for current fold
-      #------------------------------------------
-      cat("\nfold =", fold, "\n")
-      # Extract train data for current fold (from k-1 folds)
-      train_indices <- folds[[fold]]
-      train <- dat_stripped[train_indices]
-      # Add the min and max data value to the train data
-      train <- c(xmin,train,xmax)
-      # Extract test data (from the remaining fold)
-      test <- dat_stripped[-train_indices]
-      cat("n =", length(train), "in train set;",
-          "n =", length(test), "in test set\n")
-      
-      #-----------------------------------
-      # Fit P and NP methods to train data
-      #-----------------------------------
-      res <- estimate_methods(dat=train, hist = TRUE, amorosocrit = "ML")
-      
-      #-----------------------------------------------
-      # Make a list to store predictions for test fold
-      #-----------------------------------------------
-      pred_list <- list(rdens = NULL,
-                        scKDE_2infplus = NULL,
-                        mnorm = NULL,
-                        amo_mle = NULL,
-                        amo_hell_cdf = NULL,
-                        amo_hell_pdf = NULL)
-      
-      #--------------------------------
-      # Generate parametric predictions
-      #--------------------------------
-      # Generate predictions
-      pred_list$amo_mle <- generate_amo_predictions(
-        test, "amo_mle", res, fold)
-      pred_list$amo_hell_cdf <- generate_amo_predictions(
-        test, "amo_hell_cdf", res, fold)
-      pred_list$amo_hell_pdf <- generate_amo_predictions(
-        test, "amo_hell_pdf", res, fold)
-      
-      # Generate predictions from mixed normal
-      mn_mod <- res$modlist_valid$mnorm
-      pred_list$mnorm <- predict_mnorm(test, mn_mod, plot=F)
-      
-      #-----------------------------------
-      # Generate nonparametric predictions
-      #-----------------------------------
-      res_interp <- res$modlist_valid_interp
-      npfun_list <- list(rdens = NULL, scKDE_2infplus = NULL)
-      
-      for (i in 1:length(npfun_list)) {
-        if (length(res_interp[[i]]) > 1) {
-          npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
-                                       res_interp[[i]]$y,
-                                       method = "monoH.FC")
-        } else {
-          npfun_list[[i]] <- NA
-        }
+    # Generate predictions from mixed normal
+    mn_mod <- res$modlist_valid$mnorm
+    pred_list$mnorm <- predict_mnorm(test, mn_mod, plot=F)
+    
+    #-----------------------------------
+    # Generate nonparametric predictions
+    #-----------------------------------
+    res_interp <- res$modlist_valid_interp
+    npfun_list <- list(rdens = NULL, scKDE_2infplus = NULL)
+    
+    for (i in 1:length(npfun_list)) {
+      if (length(res_interp[[i]]) > 1) {
+        npfun_list[[i]] <- splinefun(res_interp[[i]]$x,
+                                     res_interp[[i]]$y,
+                                     method = "monoH.FC")
+      } else {
+        npfun_list[[i]] <- NA
       }
-      
-      for (i in 1:(length(pred_list)-4)) {
-        if(!is.na(npfun_list[i])) {
-          predvec <- npfun_list[[i]](test)
-          predvec[is.na(predvec)] <- 0
-          pred_list[[i]] <- predvec
-        } else {
-          pred_list[[i]] <- NA
-        }
+    }
+    
+    for (i in 1:(length(pred_list)-4)) {
+      if(!is.na(npfun_list[i])) {
+        predvec <- npfun_list[[i]](test)
+        predvec[is.na(predvec)] <- 0
+        pred_list[[i]] <- predvec
+      } else {
+        pred_list[[i]] <- NA
       }
+    }
+    
+    #----------------------------------------------
+    # Calculate likelihood measures of current fold
+    #----------------------------------------------
+    # If we know the true distribution is Amoroso or normal, calculate the
+    # true y for the test set
+    if (add_prop_amo) {
+      true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
+      true_logL <- sum(log(true_pred))
+      true_medL <- median(true_pred)
+    } else if (add_prop_norm) {
+      true_pred <- dnorm(test, genpar[1], genpar[2])
+      true_logL <- sum(log(true_pred))
+      true_medL <- median(true_pred)
+    }
+    
+    # Initialize vector for likelihood measures of all methods in this fold
+    logL_vec_fold <- numeric(length(pred_list))
+    medL_vec_fold <- numeric(length(pred_list))
+    
+    # For current fold, calculate the two likelihood measures for each method
+    for (i in seq_along(pred_list)) {
+      pred <- pred_list[[i]]
+      method_name <- names(pred_list)[i]
       
-      #----------------------------------------------
-      # Calculate likelihood measures of current fold
-      #----------------------------------------------
-      # If we know the true distribution is Amoroso or normal, calculate the
-      # true y for the test set
-      if (add_prop_amo) {
-        true_pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
-        true_logL <- sum(log(true_pred))
-        true_medL <- median(true_pred)
-      } else if (add_prop_norm) {
-        true_pred <- dnorm(test, genpar[1], genpar[2])
-        true_logL <- sum(log(true_pred))
-        true_medL <- median(true_pred)
-      }
-      
-      # Initialize vector for likelihood measures of all methods in this fold
-      logL_vec_fold <- numeric(length(pred_list))
-      medL_vec_fold <- numeric(length(pred_list))
-      
-      # For current fold, calculate the two likelihood measures for each method
-      for (i in seq_along(pred_list)) {
-        pred <- pred_list[[i]]
-        method_name <- names(pred_list)[i]
-        
-        # If predictions include NA, calculate neither likelilihood measure
-        if(anyNA(pred)) {
-          na_pred_models <- append(na_pred_models, method_name)
-          warning(paste("Fold", fold, ": Skipping calculations for method:",
-                        method_name, "; Predictions include NA."))
-          logL_vec_fold[i] <- NA
-          medL_vec_fold[i] <- NA
+      # If predictions include NA, calculate neither likelilihood measure
+      if(anyNA(pred)) {
+        na_pred_models <- append(na_pred_models, method_name)
+        warning(paste("Fold", fold, ": Skipping calculations for method:",
+                      method_name, "; Predictions include NA."))
+        logL_vec_fold[i] <- NA
+        medL_vec_fold[i] <- NA
         # If predictions include 0, calculate only median likelihood
-        } else if (any(pred == 0)) {
-          zero_pred_models <- append(zero_pred_models, method_name)
-          warning(paste("Fold", fold, ": Skipping log-likelihood for method:",
-                        method_name, "; Predictions include 0."))
-          logL_vec_fold[i] <- NA
-          medL_vec_fold[i] <- median(pred)
+      } else if (any(pred == 0)) {
+        zero_pred_models <- append(zero_pred_models, method_name)
+        warning(paste("Fold", fold, ": Skipping log-likelihood for method:",
+                      method_name, "; Predictions include 0."))
+        logL_vec_fold[i] <- NA
+        medL_vec_fold[i] <- median(pred)
         # Otherwise calculate both
-        } else {
-          logL_vec_fold[i] <- sum(log(pred))
-          medL_vec_fold[i] <- median(pred)
-        }
+      } else {
+        logL_vec_fold[i] <- sum(log(pred))
+        medL_vec_fold[i] <- median(pred)
       }
-      
-      #--------------------------------------------------
-      # Add likelihood measures of current fold to tibble
-      #--------------------------------------------------
-      fold_colname_logL <- paste0("logL_f", fold)
-      fold_colname_logL_prop <- paste0("logL_prop_f", fold)
-      fold_colname_medL <- paste0("medL_f", fold)
-      fold_colname_medL_prop <- paste0("medL_prop_f", fold)
-      
-      likelihood_tib[[fold_colname_logL]] <- logL_vec_fold
-      likelihood_tib[[fold_colname_medL]] <- medL_vec_fold
-      
-      if(xor(add_prop_norm,add_prop_amo)) {
-        likelihood_tib[[fold_colname_logL_prop]] <- logL_vec_fold/true_logL
-        likelihood_tib[[fold_colname_medL_prop]] <- medL_vec_fold/true_medL
-      }
-      
     }
     
-    #--------------------------------------------------------
-    # Across all folds, calculate average likelihood measures
-    #--------------------------------------------------------
-    if(xor(add_prop_norm,add_prop_amo)) {
-      likelihood_tib <- likelihood_tib %>%
-        mutate(
-          logL_avg = rowMeans(across(starts_with("logL_f"))),
-          logL_prop_avg = rowMeans(across(starts_with("logL_prop_f"))),
-          medL_avg = rowMeans(across(starts_with("medL_f"))),
-          medL_prop_avg = rowMeans(across(starts_with("medL_prop_f")))
-        )
-    } else {
-      likelihood_tib <- likelihood_tib %>%
-        mutate(
-          logL_avg = rowMeans(across(starts_with("logL_f"))),
-          medL_avg = rowMeans(across(starts_with("medL_f")))
-        )
-    }
+    #--------------------------------------------------
+    # Add likelihood measures of current fold to tibble
+    #--------------------------------------------------
+    fold_colname_logL <- paste0("logL_f", fold)
+    fold_colname_logL_prop <- paste0("logL_prop_f", fold)
+    fold_colname_medL <- paste0("medL_f", fold)
+    fold_colname_medL_prop <- paste0("medL_prop_f", fold)
     
-    # Store results for this repetition
-    repetition_results[[rep]] <- list(
-      na_pred_models = unique(na_pred_models),
-      zero_pred_models = unique(zero_pred_models),
-      likelihood_tib = likelihood_tib
-    )
-  }
-  
-  #---------------------------------------------------
-  # Calculate final results across all repetitions
-  #---------------------------------------------------
-  # Initialize matrices to store results from the repetitions
-  n_methods <- 6
-  logL_matrix <- matrix(NA, nrow = n_repetitions, ncol = n_methods)
-  medL_matrix <- matrix(NA, nrow = n_repetitions, ncol = n_methods)
-  
-  if(xor(add_prop_norm,add_prop_amo)) {
-    logL_prop_matrix <- matrix(NA, nrow = n_repetitions, ncol = n_methods)
-    medL_prop_matrix <- matrix(NA, nrow = n_repetitions, ncol = n_methods)
-  }
-  
-  # Add results from each repetition
-  for(rep in 1:n_repetitions) {
-    rep_tib <- repetition_results[[rep]]$likelihood_tib
-    logL_matrix[rep,] <- rep_tib$logL_avg
-    medL_matrix[rep,] <- rep_tib$medL_avg
+    likelihood_tib[[fold_colname_logL]] <- logL_vec_fold
+    likelihood_tib[[fold_colname_medL]] <- medL_vec_fold
     
     if(xor(add_prop_norm,add_prop_amo)) {
-      logL_prop_matrix[rep,] <- rep_tib$logL_prop_avg
-      medL_prop_matrix[rep,] <- rep_tib$medL_prop_avg
+      likelihood_tib[[fold_colname_logL_prop]] <- logL_vec_fold/true_logL
+      likelihood_tib[[fold_colname_medL_prop]] <- medL_vec_fold/true_medL
     }
   }
   
-  # Calculate final results
+  #--------------------------------------------------------
+  # Across all folds, calculate average likelihood measures
+  #--------------------------------------------------------
   if(xor(add_prop_norm,add_prop_amo)) {
-    final_results <- tibble(
-      method = c("rdens","scKDE_2infplus","mnorm",
-                 "amo_mle", "amo_hell_cdf", "amo_hell_pdf"),
-      logL_mean = colMeans(logL_matrix, na.rm = TRUE),
-      logL_se = apply(logL_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions),
-      logL_prop_mean = colMeans(logL_prop_matrix, na.rm = TRUE),
-      logL_prop_se = apply(logL_prop_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions),
-      medL_mean = colMeans(medL_matrix, na.rm = TRUE),
-      medL_se = apply(medL_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions),
-      medL_prop_mean = colMeans(medL_prop_matrix, na.rm = TRUE),
-      medL_prop_se = apply(medL_prop_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions)
-    )
+    likelihood_tib <- likelihood_tib %>%
+      mutate(
+        logL_avg = rowMeans(across(starts_with("logL_f"))),
+        logL_prop_avg = rowMeans(across(starts_with("logL_prop_f"))),
+        medL_avg = rowMeans(across(starts_with("medL_f"))),
+        medL_prop_avg = rowMeans(across(starts_with("medL_prop_f")))
+      )
   } else {
-    final_results <- tibble(
-      method = c("rdens","scKDE_2infplus","mnorm",
-                 "amo_mle", "amo_hell_cdf", "amo_hell_pdf"),
-      logL_mean = colMeans(logL_matrix, na.rm = TRUE),
-      logL_se = apply(logL_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions),
-      medL_mean = colMeans(medL_matrix, na.rm = TRUE),
-      medL_se = apply(medL_matrix, 2, sd, na.rm = TRUE) / sqrt(n_repetitions)
-    )
+    likelihood_tib <- likelihood_tib %>%
+      mutate(
+        logL_avg = rowMeans(across(starts_with("logL_f"))),
+        medL_avg = rowMeans(across(starts_with("medL_f")))
+      )
   }
-  
-  # Collect all failed models across repetitions
-  all_na_models <- unique(unlist(lapply(repetition_results, 
-                                        function(x) x$na_pred_models)))
-  all_zero_models <- unique(unlist(lapply(repetition_results, 
-                                          function(x) x$zero_pred_models)))
   
   return(list(
-    repetition_results = repetition_results,
-    final_results = final_results,
-    all_na_models = all_na_models,
-    all_zero_models = all_zero_models
+    likelihood_tib = likelihood_tib,
+    all_na_models = unique(na_pred_models),
+    all_zero_models = unique(zero_pred_models)
   ))
 }
 
 
-
 #------
 dat <- rnorm(100,175,7)
-get_pp(dat, n_repetitions = 3)
+get_pp(dat)
+

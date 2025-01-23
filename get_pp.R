@@ -45,7 +45,7 @@ get_pp <- function(
   
   
   #---------------------------------------------------------------------------
-  # Calculate log likelihood of test data under data-generating Amoroso/Normal
+  # Check whether true data-generating distribution is specified
   #---------------------------------------------------------------------------
   add_prop_amo <- FALSE
   add_prop_norm <- FALSE
@@ -71,8 +71,6 @@ get_pp <- function(
     add_prop_amo <- FALSE
     add_prop_norm <- FALSE
   }
-  
-  
   
   #-----------------------------------------------------------------------------
   #-----------------------------------------------------------------------------
@@ -382,22 +380,23 @@ get_pp <- function(
     # Get min and max value in data
     xmin <- min(dat)
     xmax <- max(dat)
-    # Remove them from the data
-    dat_stripped <-  dat[dat != xmin & dat != xmax]
     # Set seed for reproducible data splitting
     set.seed(seed)
-    # Split the data without the min and max into train and test
-    inTrain <- createDataPartition(
-      y = dat_stripped,
-      p = prop_train, # prop. of data in the training set
-      list = FALSE
-    )
-    # Split data in train and test
-    train <- c(dat[inTrain],xmin,xmax)
-    test <- dat[-inTrain]
-    # Then add back the min and max to the train set
-    # -> prevents zero predictions
-    train <- c(train, xmin, xmax)
+    # Marker that indicates whether both min and max are in the train set
+    marker <- FALSE
+    # Sample a data split until both min and max are in train set
+    while(marker == FALSE) {
+      inTrain <- createDataPartition(
+        y = dat,
+        p = prop_train, # prop. of data in the training set
+        list = FALSE
+      )
+      train <- dat[inTrain]
+      test <- dat[-inTrain]
+      if (xmin %in% train & xmax %in% train) {
+        marker <- TRUE
+      }
+    }
     
     #---------------------------------------------------------------------------
     # Calculate log likelihood of test data under data-generating Amoroso/Normal
