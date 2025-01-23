@@ -9,7 +9,7 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/predict_mnorm.R"))
+              "heads/main/mnorm_functions.R"))
 
 # Load packages
 # -> for Amoroso density function
