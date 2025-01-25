@@ -110,20 +110,3 @@ make_hist()
 lines(xx, dnorm(xx, mean, sd), col = "grey", lty = 2, lwd = 2)
 points(xx, dgg4(xx, pars[1], pars[2], pars[3], pars[4]),
        type = "l", lwd = 2, col = "black", lty = 1)
-
-
-#-------------------------------------------------------------------------------
-# Check ranges
-# range(rdens$x)
-# range(amo$x)
-# range(mnorm$x)
-# range(adjKDE$x)
-
-get_pp(x)
-
-# Code for interpolation
-# -> interpolated
-# y_interp <- approx(mnorm$x, mnorm$y, xout = xx, rule = 1)$y
-# y_interp[is.na(y_interp)] <- 0
-# points(xx, y_interp,
-#        type = "l", lwd = 2, col = "black", lty = 1)

@@ -1,37 +1,33 @@
-# estimate_methods new
-# -> remove Bernstein
-# -> remove adj. KDE "unimodal and adj KDE "twoInflections+"
-
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 # Source functions
 # -> for estimating Amoroso
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
+# -> for estimating Bernstein
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
-              "heads/main/mnorm_functions.R"))
+              "heads/main/estimate_bernstein.R"))
 
 # Load packages
-# -> for Amoroso density function
 require(AmoRosoDistrib)
-# -> for adjusted KDE
+# -> for Amoroso density function
 require(scdensity) 
-# -> for mixed normal estimation
+# -> for adjusted KDE
 require(mclust)
-# -> for mixed normal density function
+# -> for mixed normal estimation
 require(LaplacesDemon)
-
+# -> for mixed normal density function
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-estimate_methods <- function(dat = NULL,
-                             plot = TRUE, hist = TRUE, breaks = 20,
-                             minimal = FALSE,
-                             plot_common_x = TRUE,
-                             main = NULL,
-                             generatingnormal = NULL, # supply (mean,sd)
-                             amorosocrit = "ML", xticks = NULL
+estimate_methods_9 <- function(dat = NULL,
+                                plot = TRUE, hist = TRUE, breaks = 20,
+                                minimal = FALSE,
+                                plot_common_x = TRUE,
+                                main = NULL,
+                                generatingnormal = NULL, # supply (mean,sd)
+                                amorosocrit = "ML", xticks = NULL
 ) {
   
   ## For testing
@@ -84,9 +80,22 @@ estimate_methods <- function(dat = NULL,
   amo <- safe_execute(quote(
     estimate_amoroso(dat, plot=0, criterion="ML")), "amo", dat)
   
+  #### Bernstein ####
+  bern1 <- safe_execute(quote(
+    estimate_bernstein(dat, bound_type = "sd")), "bern1", dat)
+  
+  bern2 <- safe_execute(quote(
+    estimate_bernstein(dat, bound_type = "Carv")), "bern2", dat)
+  
   #### Adjusted KDE ####
   scKDE_2infplus <- safe_execute(quote(
     scdensity(dat, constraint = "twoInflections+")), "scKDE_2infplus", dat)
+  
+  scKDE_2inf <- safe_execute(quote(
+    scdensity(dat, constraint = "twoInflections")), "scKDE_2inf", dat)
+  
+  scKDE_uni <- safe_execute(quote(
+    scdensity(dat, constraint = "unimodal")), "scKDE_uni", dat)
   
   ##### R density ####
   rdens <- safe_execute(quote(
@@ -94,12 +103,10 @@ estimate_methods <- function(dat = NULL,
   
   ##### Mixed Normal #####
   mnorm <- safe_execute(quote(
-    densityMclust(dat, plot=F)), "mnorm", dat)
-  mnorm$x <- rdens$x
-  mnorm$y <- predict_mnorm(mnorm$x, mnorm, plot=F)
-  # xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
-  # mnorm$x <- xy_ordered_df$x
-  # mnorm$y <- xy_ordered_df$y
+    densityMclust(dat)), "mnorm", dat)
+  xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
+  mnorm$x <- xy_ordered_df$x
+  mnorm$y <- xy_ordered_df$y
   
   
   ############################
@@ -151,11 +158,10 @@ estimate_methods <- function(dat = NULL,
   ############################
   
   # List of all models
-  modlist <- list(rdens = rdens,
-                  scKDE_2infplus = scKDE_2infplus,
-                  mnorm = mnorm,
-                  amo_mle = amo_mle,
-                  amo_hell_cdf = amo_hell_cdf,
+  modlist <- list(rdens = rdens, bern1 = bern1, bern2 = bern2,
+                  scKDE_uni = scKDE_uni,scKDE_2inf = scKDE_2inf,
+                  scKDE_2infplus = scKDE_2infplus, mnorm = mnorm,
+                  amo_mle = amo_mle, amo_hell_cdf = amo_hell_cdf,
                   amo_hell_pdf = amo_hell_pdf
   )
   
@@ -239,6 +245,10 @@ estimate_methods <- function(dat = NULL,
     # Make vector with all titles
     all_titles <- list(
       rdens = "R density()",
+      bern1 = "Bernstein",
+      bern2 = "Bernstein",
+      scKDE_uni = "Adj. KDE ('unimodal')",
+      scKDE_2inf = "Adj. KDE ('twoInflections')",
       scKDE_2infplus = "Adj. KDE ('twoInflections+')",
       mnorm = "Mixed Normal",
       amo_mle = amo_mle_title,
@@ -259,11 +269,14 @@ estimate_methods <- function(dat = NULL,
     if (minimal == FALSE) {
       
       # Initialize 2x3 plotting grid
-      par(mfrow=c(2,3), oma = c(0, 0, 5, 0), cex.axis = 0.9, font.lab = 2,
+      par(mfrow=c(3,3), oma = c(0, 0, 5, 0), cex.axis = 0.9, font.lab = 2,
           font.axis = 1, family = "Times New Roman")
       
       # Plot density estimates
       for (i in 1:length(modlist_plot)) {
+        
+        # Skip Bernstein 2 to add it to the same plot as Bernstein 1 later
+        if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
           plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
@@ -289,10 +302,24 @@ estimate_methods <- function(dat = NULL,
           # Optional: add data-generating normal distribution
           if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
             lines(xvals, dnorm(xvals,
-                               mean = generatingnormal[1],
-                               sd = generatingnormal[2]), 
+                                 mean = generatingnormal[1],
+                                 sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
           }
+          
+        } else {
+          
+          # If Bernstein 2 fit is valid, add it to Bernstein 1 plot
+          if (length(modlist_plot[[i]]) > 1) {
+            lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y,
+                  col = 'chartreuse4', lwd = 2)
+          }
+          # Add legend
+          legend("topright", lty = 1, lwd = 2, cex = 0.8, bty = "n",
+                 legend = c("bound.type = 'sd'","bound.type = 'Carv'"),
+                 col = c("mediumorchid2","chartreuse4"),
+          )
+        }
       }
       
       # Add big title
@@ -311,11 +338,14 @@ estimate_methods <- function(dat = NULL,
     } else {
       
       # Initialize 2x3 plotting grid
-      par(mfrow=c(2,3), oma = c(1, 6, 1, 1), mar = c(5,5,5,5), cex.axis = 1.4,
+      par(mfrow=c(3,3), oma = c(1, 6, 1, 1), mar = c(5,5,5,5), cex.axis = 1.4,
           font.lab = 2, font.axis = 1, family = "Times New Roman")
       
       # Plot density estimates
       for (i in 1:length(modlist_plot)) {
+        
+        # Skip Bernstein 2 to add it to the same plot as Bernstein 1 later
+        if (names(modlist_plot)[i] != "bern2") {
           
           # Make empty plot
           plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0,ymax),
@@ -344,9 +374,16 @@ estimate_methods <- function(dat = NULL,
           # Optional: add data-generating normal distribution
           if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
             lines(xvals, dnorm(xvals,
-                               mean = generatingnormal[1],
-                               sd = generatingnormal[2]), 
+                                 mean = generatingnormal[1],
+                                 sd = generatingnormal[2]), 
                   type = "l", lwd = 1, lty = 2, col = "grey30")
+          }
+          
+        } else {
+          
+          # If Bernstein 2 is valid, add it to the same plot as Bernstein 1
+          if (length(modlist_plot[[i]]) > 1) {
+            lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y, col = 'chartreuse4', lwd = 2)
           }
         }
       }
@@ -358,6 +395,7 @@ estimate_methods <- function(dat = NULL,
         big_title <- main
       }
       mtext(text=big_title, side=2, cex=3, line=1.5, outer=TRUE, font=2)
+    }
     
   } else {
     
@@ -375,27 +413,3 @@ estimate_methods <- function(dat = NULL,
   invisible(return_list)
   
 }
-
-
-#-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-### Test the function ###
-
-#data <- palmerpenguins::penguins$bill_depth_mm
-#dat <- palmerpenguins::penguins$bill_length_mm
-#dat <- palmerpenguins::penguins$flipper_length_mm
-#res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
-#res$modlist_valid
-
-#set.seed(125)
-#data <- rgg4(50, a=4,l=1,c=7,mu=0)
-#data <- rgg4(100, a=4,l=1,c=6,mu=0)
-#data <- rnorm(70, mean = 4, sd = 0.7)
-#data <- rgg4(40, a=4, l=1, c=7, mu=0)
-
-#res1 <- estimate_methods_2(dat = dat, plot_common_x = TRUE)
-#res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
-#res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
-
-#names(res1$modlist_valid_interp)
