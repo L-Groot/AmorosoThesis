@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Make predictions using mixed_normal_pdf (to ensure consistency with the plot)
+# Mixed normal PDF
 mixed_normal_pdf <- function(x, propvec, meanvec, varvec) {
   pdf_vals <- numeric(length(x))
   for (i in seq_along(propvec)) {
@@ -9,8 +9,7 @@ mixed_normal_pdf <- function(x, propvec, meanvec, varvec) {
 }
 
 #-------------------------------------------------------------------------------
-# Function that predicts density for new data from a mixed normal model
-# (that was fit using densityMclust())
+# Function that predicts new data from a densityMclust() mixed normal model
 
 predict_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
   
@@ -60,4 +59,3 @@ predict_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
   return(pred_y)
 }
 
-##
