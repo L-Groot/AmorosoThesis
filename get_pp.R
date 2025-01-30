@@ -155,13 +155,14 @@ get_pp <- function(
   run_kfold <- function(dat, k = 5, genpar, gendist,
                         np_methods = c("rdens", "scKDE_2infplus")) {
     
-    # Remove min and max from data
-    dat_stripped <- dat[dat != min(dat) & dat != max(dat)]
+    # Remove min from data
+    dat_stripped <- dat[dat != min(dat)]
+    #dat_stripped <- dat[dat != min(dat) & dat != max(dat)]
     
     # Set seed for reproducible fold splitting
     set.seed(seed)
     
-    # Divide data without min and max into folds
+    # Divide data without min into k folds
     folds <- createFolds(dat_stripped, k = k, list = TRUE, returnTrain = TRUE)
     
     # Initialize lists to store results
@@ -175,8 +176,9 @@ get_pp <- function(
     for (fold in seq_len(k)) {
       cat("Processing fold", fold, "\n")
       
-      # Prepare train and test sets
-      train <- c(min(dat), dat_stripped[folds[[fold]]], max(dat))
+      # Make train set (add min to it!)
+      train <- c(min(dat), dat_stripped[folds[[fold]]])
+      #train <- c(min(dat), dat_stripped[folds[[fold]]], max(dat))
       # -> always add min and max to train set
       test <- dat_stripped[-folds[[fold]]]
       
@@ -243,20 +245,13 @@ get_pp <- function(
     train <- dat[inTrain]
     test <- dat[-inTrain]
     
-    # Ensure both min and max are in the train set
+    # Ensure that min is in train
     dat_min <- min(dat)
-    dat_max <- max(dat)
     
     # If min not yet in train, move it from test to train
     if (!(dat_min %in% train)) {
       train <- c(train, dat_min)
       test <- test[test != dat_min]
-    }
-    
-    # If max not yet in train, move it from test to train
-    if (!(dat_max %in% train)) {
-      train <- c(train, dat_max)
-      test <- test[test != dat_max]
     }
     
     # Fit methods to train set, make predictions for test set and calculate
@@ -282,8 +277,8 @@ get_pp <- function(
     # Loop through all n test observations LOOCV
     for (i in seq_along(dat)) {
       
-      # Skip iterations where the test observation is either the min or max
-      if (dat[i] == min(dat) || dat[i] == max(dat)) {
+      # Skip iterations where the test observation is the min
+      if (dat[i] == min(dat)) {
         skipped_iterations <- c(skipped_iterations, i)
         next
       }
@@ -360,20 +355,20 @@ get_pp <- function(
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-dat <- rnorm(20)
-dat <- rgg4(20, a=4,l=1,c=7,mu=0)
-
-
-res <- get_pp(dat, method = "k-fold", k=5)
-res <- get_pp(dat, method = "k-fold", k=5, generating_amoroso = c(4,1,7,0))
-res <- get_pp(dat, method = "k-fold", k=5, generating_normal = c(0,1))
-
-res <- get_pp(dat, method = "loocv")
-res <- get_pp(dat, method = "loocv", generating_amoroso = c(4,1,7,0))
-res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
-
-res <- get_pp(dat, method = "split-half", prop_train = 0.5)
-res <- get_pp(dat, method = "split-half", prop_train = 0.5,
-              generating_amoroso = c(4,1,7,0))
-res <- get_pp(dat, method = "split-half", prop_train = 0.5,
-              generating_normal = c(0,1))
+# dat <- rnorm(20)
+# dat <- rgg4(20, a=4,l=1,c=7,mu=0)
+# 
+# 
+# res <- get_pp(dat, method = "k-fold", k=5)
+# res <- get_pp(dat, method = "k-fold", k=5, generating_amoroso = c(4,1,7,0))
+# res <- get_pp(dat, method = "k-fold", k=5, generating_normal = c(0,1))
+# 
+# res <- get_pp(dat, method = "loocv")
+# res <- get_pp(dat, method = "loocv", generating_amoroso = c(4,1,7,0))
+# res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
+# 
+# res <- get_pp(dat, method = "split-half", prop_train = 0.5)
+# res <- get_pp(dat, method = "split-half", prop_train = 0.5,
+#               generating_amoroso = c(4,1,7,0))
+# res <- get_pp(dat, method = "split-half", prop_train = 0.5,
+#               generating_normal = c(0,1))
