@@ -206,8 +206,8 @@ estimate_methods <- function(dat = NULL,
   xmin_dat <- min(dat)
   xmax_dat <- max(dat)
   xrange <- xmax_dat-xmin_dat
-  xmin_plot <- xmin_dat-0.15*xrange
-  xmax_plot <- xmax_dat+0.15*xrange
+  xmin_plot <- xmin_dat-0.2*xrange
+  xmax_plot <- xmax_dat+0.2*xrange
   
   #####################
   ### 4. MAKE PLOTS ###
