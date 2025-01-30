@@ -1,6 +1,8 @@
-# estimate_methods new
-# -> remove Bernstein
-# -> remove adj. KDE "unimodal and adj KDE "twoInflections+"
+# estimate_methods 3
+# -> removed Bernstein
+# -> removed adj. KDE "unimodal and adj KDE "twoInflections+"
+# -> removed Amoroso MLE
+# -> force to take only a>0 Amorosos
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -83,6 +85,9 @@ estimate_methods <- function(dat = NULL,
   #### Amoroso ####
   amo <- safe_execute(quote(
     estimate_amoroso(dat, plot=0, criterion="ML")), "amo", dat)
+  amo_x <- amo$x
+  amo <- amo$all_models #extract df with all models
+  amo <- amo %>% filter(space == "+") #extract only models in a>0 par space
   
   #### Adjusted KDE ####
   scKDE_2infplus <- safe_execute(quote(
@@ -108,17 +113,17 @@ estimate_methods <- function(dat = NULL,
   
   # Helper function to extract a specific Amoroso from the big Amoroso list
   extract_amoroso <- function(amo, method_id) {
-    if (method_id %in% amo$max_L_models$method_ID) {
-      model <- amo$max_L_models %>% filter(method_ID == method_id)
+    if (method_id %in% amo$method_ID) {
+      model <- amo %>% filter(method_ID == method_id)
       pars <- model %>%
         slice(1) %>%
         select(a, l, c, mu) %>%
         unlist(use.names = FALSE)
       name <- paste0(model$method, " (", model$space, ")")
       name_id <- paste0(model$method_ID, " (", model$space, ")")
-      density_values <- dgg4(amo$x, pars[1], pars[2], pars[3], pars[4])
+      density_values <- dgg4(amo_x, pars[1], pars[2], pars[3], pars[4])
       density_values[is.na(density_values)] <- 0
-      return(list(x = amo$x, y = density_values, pars = pars, method = name,
+      return(list(x = amo_x, y = density_values, pars = pars, method = name,
                   method_short = name_id))
     } else {
       warning(paste(method_id, "Amoroso absent"))
@@ -126,19 +131,14 @@ estimate_methods <- function(dat = NULL,
     }
   }
   
-  # Extract MLE, Hellinger CDF and Hellinger PDF Amoroso
+  # Extract Hellinger CDF and Hellinger PDF Amoroso in a>0 par space
   if (length(amo) > 1) { # If at least one Amoroso method produced a valid fit:
-    if ("MLE" %in% amo$max_L_models$method_ID) {
-      amo_mle <- extract_amoroso(amo, "MLE")
-    } else {
-      amo_mle <- NULL
-    }
-    if ("HELL-CDF" %in% amo$max_L_models$method_ID) {
+    if ("HELL-CDF" %in% amo$method_ID) {
       amo_hell_cdf <- extract_amoroso(amo, "HELL-CDF")
     } else {
       amo_hell_cdf <- NULL
     }
-    if ("HELL-PDF" %in% amo$max_L_models$method_ID) {
+    if ("HELL-PDF" %in% amo$method_ID) {
       amo_hell_pdf <- extract_amoroso(amo, "HELL-PDF")
     } else {
       amo_hell_pdf <- NULL
@@ -154,7 +154,6 @@ estimate_methods <- function(dat = NULL,
   modlist <- list(rdens = rdens,
                   scKDE_2infplus = scKDE_2infplus,
                   mnorm = mnorm,
-                  amo_mle = amo_mle,
                   amo_hell_cdf = amo_hell_cdf,
                   amo_hell_pdf = amo_hell_pdf
   )
@@ -224,7 +223,6 @@ estimate_methods <- function(dat = NULL,
     }
     
     # Make Amoroso titles
-    amo_mle_title <- paste0("Amoroso", " (", amo_mle$method_short, ")")
     if(!is.null(amo_hell_cdf)) {
       amo_hell_cdf_title <- paste0("Amoroso"," (",amo_hell_cdf$method_short, ")")
     } else {
@@ -241,7 +239,6 @@ estimate_methods <- function(dat = NULL,
       rdens = "R density()",
       scKDE_2infplus = "Adj. KDE ('twoInflections+')",
       mnorm = "Mixed Normal",
-      amo_mle = amo_mle_title,
       amo_hell_cdf = amo_hell_cdf_title,
       amo_hell_pdf = amo_hell_pdf_title)
     
@@ -259,45 +256,45 @@ estimate_methods <- function(dat = NULL,
     if (minimal == FALSE) {
       
       # Initialize 2x3 plotting grid
-      par(mfrow=c(2,3), oma = c(0, 0, 5, 0), cex.axis = 0.9, font.lab = 2,
+      par(mfrow=c(1,5), oma = c(0, 0, 5, 0), cex.axis = 0.9, font.lab = 2,
           font.axis = 1, family = "Times New Roman")
       
       # Plot density estimates
       for (i in 1:length(modlist_plot)) {
-          
-          # Make empty plot
-          plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
-               xlab = "x", ylab = "Density", main = titlevec[i], axes = FALSE)
-          ifelse(is.null(xticks),
-                 axis(1),
-                 axis(1, at = xticks, labels = xticks))
-          axis(2, las = 2)
-          rug(dat, col = "blue", lwd = 1)
-          
-          # Optional: add histogram
-          if (hist == TRUE) {
-            hist(dat, prob = T, breaks = breaks, col = "grey95",
-                 border = "grey85", axes = FALSE, add = TRUE)
-          }
-          
-          # If model is valid, add density estimate
-          if (length(modlist_plot[[i]]) > 1) {
-            lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y,
-                  col = 'mediumorchid2', lwd = 2)
-          }
-          
-          # Optional: add data-generating normal distribution
-          if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
-            lines(xvals, dnorm(xvals,
-                               mean = generatingnormal[1],
-                               sd = generatingnormal[2]), 
-                  type = "l", lwd = 1, lty = 2, col = "grey30")
-          }
+        
+        # Make empty plot
+        plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
+             xlab = "x", ylab = "Density", main = titlevec[i], axes = FALSE)
+        ifelse(is.null(xticks),
+               axis(1),
+               axis(1, at = xticks, labels = xticks))
+        axis(2, las = 2)
+        rug(dat, col = "blue", lwd = 1)
+        
+        # Optional: add histogram
+        if (hist == TRUE) {
+          hist(dat, prob = T, breaks = breaks, col = "grey95",
+               border = "grey85", axes = FALSE, add = TRUE)
+        }
+        
+        # If model is valid, add density estimate
+        if (length(modlist_plot[[i]]) > 1) {
+          lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y,
+                col = 'mediumorchid2', lwd = 2)
+        }
+        
+        # Optional: add data-generating normal distribution
+        if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+          lines(xvals, dnorm(xvals,
+                             mean = generatingnormal[1],
+                             sd = generatingnormal[2]), 
+                type = "l", lwd = 1, lty = 2, col = "grey30")
+        }
       }
       
       # Add big title
       if (is.null(main)) {
-        big_title <- "Nonparametric, Amoroso and Mixed Normal Fits"
+        big_title <- "Nonparametric, Mixed Normal and Amoroso Fits"
         #amo_hell_pdf_title
       } else {
         big_title <- main
@@ -311,53 +308,53 @@ estimate_methods <- function(dat = NULL,
     } else {
       
       # Initialize 2x3 plotting grid
-      par(mfrow=c(2,3), oma = c(1, 6, 1, 1), mar = c(5,5,5,5), cex.axis = 1.4,
+      par(mfrow=c(1,5), oma = c(1, 6, 1, 1), mar = c(2,2,2,2), cex.axis = 1.4,
           font.lab = 2, font.axis = 1, family = "Times New Roman")
       
       # Plot density estimates
       for (i in 1:length(modlist_plot)) {
-          
-          # Make empty plot
-          plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0,ymax),
-               type = "l", lwd = 1, lty = 2, main = "", axes = F,
-               xlab="", ylab ="")
-          
-          # Optional: Add custom x axis ticks
-          ifelse(is.null(xticks),
-                 axis(1),
-                 axis(1, at = xticks, labels = xticks))
-          
-          rug(dat, col = "dodgerblue3", lwd = 1)
-          mtext(titlevec[i], side=3, font=2, cex=1.5, line=1)
-          
-          # Optional: add histogram
-          if (hist == TRUE) {
-            hist(dat, prob = T, breaks = breaks, col = "grey95",
-                 border = "grey85", axes = FALSE, add = TRUE)
-          }
-          
-          # Add density estimate
-          if (length(modlist_plot[[i]]) > 1) {
-            lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y, col = "deeppink2", lwd = 2)
-          }
-          
-          # Optional: add data-generating normal distribution
-          if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
-            lines(xvals, dnorm(xvals,
-                               mean = generatingnormal[1],
-                               sd = generatingnormal[2]), 
-                  type = "l", lwd = 1, lty = 2, col = "grey30")
-          }
+        
+        # Make empty plot
+        plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0,ymax),
+             type = "l", lwd = 1, lty = 2, main = "", axes = F,
+             xlab="", ylab ="")
+        
+        # Optional: Add custom x axis ticks
+        ifelse(is.null(xticks),
+               axis(1),
+               axis(1, at = xticks, labels = xticks))
+        
+        rug(dat, col = "dodgerblue3", lwd = 1)
+        mtext(titlevec[i], side=3, font=2, cex=1.5, line=1)
+        
+        # Optional: add histogram
+        if (hist == TRUE) {
+          hist(dat, prob = T, breaks = breaks, col = "grey95",
+               border = "grey85", axes = FALSE, add = TRUE)
+        }
+        
+        # Add density estimate
+        if (length(modlist_plot[[i]]) > 1) {
+          lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y, col = "deeppink2", lwd = 2)
+        }
+        
+        # Optional: add data-generating normal distribution
+        if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+          lines(xvals, dnorm(xvals,
+                             mean = generatingnormal[1],
+                             sd = generatingnormal[2]), 
+                type = "l", lwd = 1, lty = 2, col = "grey30")
         }
       }
-      
-      # Add big title at left side
-      if (is.null(main)) {
-        big_title <- paste0("rnorm(", as.character(n), ")")
-      } else {
-        big_title <- main
-      }
-      mtext(text=big_title, side=2, cex=3, line=1.5, outer=TRUE, font=2)
+    }
+    
+    # Add big title at left side
+    if (is.null(main)) {
+      big_title <- paste0("rnorm(", as.character(n), ")")
+    } else {
+      big_title <- main
+    }
+    mtext(text=big_title, side=2, cex=3, line=1.5, outer=TRUE, font=2)
     
   } else {
     
@@ -388,13 +385,13 @@ estimate_methods <- function(dat = NULL,
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
-#set.seed(125)
-#data <- rgg4(50, a=4,l=1,c=7,mu=0)
-#data <- rgg4(100, a=4,l=1,c=6,mu=0)
-#data <- rnorm(70, mean = 4, sd = 0.7)
-#data <- rgg4(40, a=4, l=1, c=7, mu=0)
-
-#res1 <- estimate_methods_2(dat = dat, plot_common_x = TRUE)
+# set.seed(125)
+# data <- rgg4(30, a=4,l=1,c=7,mu=0)
+# data <- rgg4(100, a=4,l=1,c=6,mu=0)
+# data <- rnorm(70, mean = 4, sd = 0.7)
+# data <- rgg4(20, a=4, l=1, c=7, mu=0)
+# 
+# res1 <- estimate_methods(dat = data, plot_common_x = TRUE)
 #res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
 
