@@ -32,7 +32,8 @@ estimate_methods <- function(dat = NULL,
                              minimal = FALSE,
                              plot_common_x = TRUE,
                              main = NULL,
-                             generatingnormal = NULL, # supply (mean,sd)
+                             generatingnormal = NULL, #supply mean,sd)
+                             generatingamoroso = NULL, #supply (a,l,c,mu)
                              amorosocrit = "ML", xticks = NULL
 ) {
   
@@ -283,11 +284,32 @@ estimate_methods <- function(dat = NULL,
                 col = 'mediumorchid2', lwd = 2)
         }
         
+        # Create empty label for data-generating distribution
+        truedistlabel = NULL
+        
         # Optional: add data-generating normal distribution
         if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+          truedistlabel <- paste0("Normal(",
+                                  "mean=", generatingnormal[1],", ",
+                                  "sd=", generatingnormal[2],")")
           lines(xvals, dnorm(xvals,
                              mean = generatingnormal[1],
                              sd = generatingnormal[2]), 
+                type = "l", lwd = 1, lty = 2, col = "grey30")
+        }
+        
+        # Optional: add data-generating Amoroso distribution
+        if (length(generatingamoroso==4) && is.numeric(generatingamoroso)) {
+          truedistlabel <- paste0("Amoroso(",
+                                  "a=", generatingamoroso[1],", ",
+                                  "l=", generatingamoroso[2],", ",
+                                  "c=", generatingamoroso[3],", ",
+                                  "mu=", generatingamoroso[4],")")
+          lines(xvals, dgg4(xvals,
+                             a = generatingamoroso[1],
+                             l = generatingamoroso[2],
+                             c = generatingamoroso[3],
+                             mu = generatingamoroso[4]),
                 type = "l", lwd = 1, lty = 2, col = "grey30")
         }
       }
@@ -300,6 +322,20 @@ estimate_methods <- function(dat = NULL,
         big_title <- main
       }
       mtext(big_title, outer = TRUE, cex = 1.5, line = 2, font = 2)
+      
+      # Make function to add legend outside of the five plots
+      add_legend <- function(...) {
+        opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 1.2, 2), 
+                    mar=c(0, 0, 0, 0), new=TRUE)
+        on.exit(par(opar))
+        plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n')
+        legend(...)
+      }
+      
+      # Add true distribution legend
+      if (!is.null(truedistlabel)) {
+        add_legend("topright", legend=truedistlabel, cex=1.2,bty="n")
+      }
       
       #---------------------------------------------------------------------------
       # Minimal style (for proposal)
@@ -385,14 +421,14 @@ estimate_methods <- function(dat = NULL,
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
-# set.seed(125)
-# data <- rgg4(30, a=4,l=1,c=7,mu=0)
-# data <- rgg4(100, a=4,l=1,c=6,mu=0)
-# data <- rnorm(70, mean = 4, sd = 0.7)
-# data <- rgg4(20, a=4, l=1, c=7, mu=0)
-# 
-# res1 <- estimate_methods(dat = data, plot_common_x = TRUE)
-#res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
+#set.seed(125)
+#data <- rgg4(30, a=4,l=1,c=7,mu=0)
+#data <- rgg4(100, a=4,l=1,c=6,mu=0)
+#data <- rnorm(70, mean = 4, sd = 0.7)
+#data <- rgg4(20, a=4, l=1, c=7, mu=0)
+
+#res1 <- estimate_methods(dat = data, plot_common_x = TRUE, generatingnormal = c(4,0.7))
+#res2 <- estimate_methods(dat = data, plot_common_x = TRUE, generatingamoroso = c(4,1,7,0))
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
 
 #names(res1$modlist_valid_interp)
