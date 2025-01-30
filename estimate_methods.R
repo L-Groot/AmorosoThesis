@@ -174,6 +174,8 @@ estimate_methods <- function(dat = NULL,
   ymaxes <- sort(sapply(modlist_valid, function(mod) max(mod$y)),
                  decreasing = TRUE)
   
+  print(ymaxes)
+  
   # If any of the valid models has a spike in the density estimate, cut that
   # fit off -> just make the max histogram value the ymax
   if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
