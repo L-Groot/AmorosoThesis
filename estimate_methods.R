@@ -29,22 +29,24 @@ require(LaplacesDemon)
 
 estimate_methods <- function(dat = NULL,
                              plot = TRUE, hist = TRUE, breaks = 20,
+                             amoinaplus = TRUE, #only consider amorosos in a>0
                              minimal = FALSE,
                              plot_common_x = TRUE,
                              main = NULL,
                              generatingnormal = NULL, #supply mean,sd)
                              generatingamoroso = NULL, #supply (a,l,c,mu)
-                             amorosocrit = "ML", xticks = NULL
+                             xticks = NULL
 ) {
   
-  ## For testing
-  # dat = rnorm(70)
-  # plot = TRUE; hist = TRUE; breaks = 20
-  # minimal = FALSE
-  # plot_common_x = TRUE
-  # main = NULL
-  # generatingnormal = NULL # supply (mean,sd)
-  # amorosocrit = "ML"; xticks = NULL
+  # For testing
+  dat = rnorm(70)
+  plot = TRUE; hist = TRUE; breaks = 20
+  amoinaplus = TRUE
+  minimal = FALSE
+  plot_common_x = TRUE
+  main = NULL
+  generatingnormal = NULL # supply (mean,sd)
+  xticks = NULL
   
   ########################
   ### HELPER FUNCTION  ###
@@ -87,8 +89,15 @@ estimate_methods <- function(dat = NULL,
   amo <- safe_execute(quote(
     estimate_amoroso(dat, plot=0, criterion="ML")), "amo", dat)
   amo_x <- amo$x
-  amo <- amo$all_models #extract df with all models
-  amo <- amo %>% filter(space == "+") #extract only models in a>0 par space
+  if (amoinaplus) {
+    # For each method, extract model in a>0 parameter space
+    amo <- amo$all_models #extract df with all models
+    amo <- amo %>% filter(space == "+") #extract only models in a>0 par space
+  } else {
+    # For each method, extract model with the higher likeliihood (a+ or a-)
+    amo <- amo$max_L_models
+  }
+
   
   #### Adjusted KDE ####
   scKDE_2infplus <- safe_execute(quote(
@@ -103,9 +112,6 @@ estimate_methods <- function(dat = NULL,
     densityMclust(dat, plot=F)), "mnorm", dat)
   mnorm$x <- rdens$x
   mnorm$y <- predict_mnorm(mnorm$x, mnorm, plot=F)
-  # xy_ordered_df <- data.frame(x=mnorm$data,y=mnorm$density) %>% arrange(x)
-  # mnorm$x <- xy_ordered_df$x
-  # mnorm$y <- xy_ordered_df$y
   
   
   ############################
