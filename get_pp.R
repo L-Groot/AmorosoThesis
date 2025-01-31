@@ -65,7 +65,7 @@ get_pp <- function(
     
     pred_list <- list(
       mnorm = predict_mnorm(test, res$modlist_valid$mnorm, plot = FALSE),
-      amo_mle = predict_amo(test, "amo_mle", res),
+      #amo_mle = predict_amo(test, "amo_mle", res),
       amo_hell_cdf = predict_amo(test, "amo_hell_cdf", res),
       amo_hell_pdf = predict_amo(test, "amo_hell_pdf", res)
     )
@@ -354,12 +354,12 @@ get_pp <- function(
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-
-# dat <- rnorm(20)
+#set.seed(80)
+#dat <- rnorm(40)
 # dat <- rgg4(20, a=4,l=1,c=7,mu=0)
 # 
 # 
-# res <- get_pp(dat, method = "k-fold", k=5)
+#res <- get_pp(dat, method = "k-fold", k=5)
 # res <- get_pp(dat, method = "k-fold", k=5, generating_amoroso = c(4,1,7,0))
 # res <- get_pp(dat, method = "k-fold", k=5, generating_normal = c(0,1))
 # 
@@ -368,7 +368,7 @@ get_pp <- function(
 # res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
 # 
 # res <- get_pp(dat, method = "split-half", prop_train = 0.5)
-# res <- get_pp(dat, method = "split-half", prop_train = 0.5,
-#               generating_amoroso = c(4,1,7,0))
+#res <- get_pp(dat, method = "split-half", prop_train = 0.5,
+#            generating_amoroso = c(4,1,7,0))
 # res <- get_pp(dat, method = "split-half", prop_train = 0.5,
 #               generating_normal = c(0,1))
