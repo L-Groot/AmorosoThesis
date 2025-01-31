@@ -29,7 +29,7 @@ require(LaplacesDemon)
 
 estimate_methods <- function(dat = NULL,
                              plot = TRUE, hist = TRUE, breaks = 20,
-                             amoinaplus = TRUE, #only consider amorosos in a>0
+                             amoinaplus = FALSE, #only consider amorosos in a>0?
                              minimal = FALSE,
                              plot_common_x = TRUE,
                              main = NULL,
@@ -39,14 +39,14 @@ estimate_methods <- function(dat = NULL,
 ) {
   
   # For testing
-  dat = rnorm(70)
-  plot = TRUE; hist = TRUE; breaks = 20
-  amoinaplus = TRUE
-  minimal = FALSE
-  plot_common_x = TRUE
-  main = NULL
-  generatingnormal = NULL # supply (mean,sd)
-  xticks = NULL
+  # dat = rnorm(70)
+  # plot = TRUE; hist = TRUE; breaks = 20
+  # amoinaplus = TRUE
+  # minimal = FALSE
+  # plot_common_x = TRUE
+  # main = NULL
+  # generatingnormal = NULL # supply (mean,sd)
+  # xticks = NULL
   
   ########################
   ### HELPER FUNCTION  ###
