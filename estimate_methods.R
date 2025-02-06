@@ -32,18 +32,21 @@ estimate_methods <- function(dat = NULL,
                              amoinaplus = FALSE, #only consider amorosos in a>0?
                              minimal = FALSE,
                              plot_common_x = TRUE,
+                             rug = FALSE,
                              main = NULL,
                              generatingnormal = NULL, #supply mean,sd)
                              generatingamoroso = NULL, #supply (a,l,c,mu)
-                             xticks = NULL
+                             xticks = NULL,
+                             yticks = NULL
 ) {
   
-  # For testing
+  # # For testing
   # dat = rnorm(70)
   # plot = TRUE; hist = TRUE; breaks = 20
   # amoinaplus = TRUE
   # minimal = FALSE
   # plot_common_x = TRUE
+  # rug = FALSE
   # main = NULL
   # generatingnormal = NULL # supply (mean,sd)
   # xticks = NULL
@@ -183,13 +186,15 @@ estimate_methods <- function(dat = NULL,
   
   # If any of the valid models has a spike in the density estimate, cut that
   # fit off -> just make the max histogram value the ymax
-  if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
-    hist_list <- hist(dat, breaks=breaks, prob=TRUE)
-    ymax <- max(hist_list$density) #-> make ymax the max histogram density
-    warning("At least one density estimate has a spike which was cut off in the plots")
-  } else {
-    ymax <- ymaxes[1]
-  }
+  # if (ymaxes[1] > (3*ymaxes[length(ymaxes)])) {
+  #   hist_list <- hist(dat, breaks=breaks, prob=TRUE)
+  #   ymax <- max(hist_list$density) #-> make ymax the max histogram density
+  #   warning("At least one density estimate has a spike which was cut off in the plots")
+  # } else {
+  #   ymax <- ymaxes[1]
+  # }
+  hist_list <- hist(dat, breaks=breaks, prob=TRUE)
+  ymax <- max(hist_list$density)
   buffer <- 0.15*ymax
   ymax <- ymax + buffer
   
@@ -251,9 +256,24 @@ estimate_methods <- function(dat = NULL,
     
     # Extract only titles of valid models
     valid_titles <- all_titles[intersect(names(all_titles), names(modlist_valid))]
+
+    # Make 3 of the titles more conscise
+    if ("scKDE_2infplus" %in% names(valid_titles)) {
+      valid_titles$scKDE_2infplus <- "Adj. KDE (2Inf+)"
+    }
+    
+    for (key in c("amo_hell_cdf", "amo_hell_pdf")) {
+      if (key %in% names(valid_titles)) {
+        sign <- substr(valid_titles[[key]], nchar(valid_titles[[key]]) - 2, nchar(valid_titles[[key]]) - 2)
+        valid_titles[[key]] <- sub("HELL-(CDF|PDF) \\(.*\\)", paste0("Hell-\\1", sign, ")"), valid_titles[[key]])
+      }
+    }
     
     # Tranform to vector
     titlevec <- valid_titles %>% unlist()
+    
+    # Create vector of colours
+    colors <- c("royalblue", "springgreen4", "orange3","hotpink3","purple3")
     
     
     #---------------------------------------------------------------------------
@@ -262,8 +282,8 @@ estimate_methods <- function(dat = NULL,
     
     if (minimal == FALSE) {
       
-      # Initialize 2x3 plotting grid
-      par(mfrow=c(1,5), oma = c(0, 0, 5, 0), cex.axis = 0.9, font.lab = 2,
+      # Initialize 1x5 plotting grid
+      par(mfrow=c(1,5), oma = c(1, 1, 5, 1), cex.axis = 0.9, font.lab = 2,
           font.axis = 1, family = "Times New Roman")
       
       # Plot density estimates
@@ -271,12 +291,12 @@ estimate_methods <- function(dat = NULL,
         
         # Make empty plot
         plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
-             xlab = "x", ylab = "Density", main = titlevec[i], axes = FALSE)
+             xlab = "", ylab = "Density", main = titlevec[i], axes = FALSE)
         ifelse(is.null(xticks),
                axis(1),
                axis(1, at = xticks, labels = xticks))
         axis(2, las = 2)
-        rug(dat, col = "blue", lwd = 1)
+        if(rug) {rug(dat, col = "blue", lwd = 1)}
         
         # Optional: add histogram
         if (hist == TRUE) {
@@ -287,7 +307,7 @@ estimate_methods <- function(dat = NULL,
         # If model is valid, add density estimate
         if (length(modlist_plot[[i]]) > 1) {
           lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y,
-                col = 'mediumorchid2', lwd = 2)
+                col = colors[i], lwd = 1.7)
         }
         
         # Create empty label for data-generating distribution
@@ -349,25 +369,24 @@ estimate_methods <- function(dat = NULL,
       
     } else {
       
-      # Initialize 2x3 plotting grid
-      par(mfrow=c(1,5), oma = c(1, 6, 1, 1), mar = c(2,2,2,2), cex.axis = 1.4,
-          font.lab = 2, font.axis = 1, family = "Times New Roman")
+      # Initialize 1x5 plotting grid
+      par(mfrow=c(1,5), mar = c(1,4,2,1), oma = c(2,0,2,0), cex.axis = 0.9, font.lab = 2,
+          font.axis = 1, family = "Times New Roman", cex.main = 1.6)
       
       # Plot density estimates
       for (i in 1:length(modlist_plot)) {
         
         # Make empty plot
-        plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0,ymax),
-             type = "l", lwd = 1, lty = 2, main = "", axes = F,
-             xlab="", ylab ="")
-        
-        # Optional: Add custom x axis ticks
+        plot(NA, xlim = c(xmin_plot, xmax_plot), ylim = c(0.0, ymax),
+             xlab = "", ylab = "Density", main = titlevec[i], axes = FALSE)
         ifelse(is.null(xticks),
                axis(1),
                axis(1, at = xticks, labels = xticks))
-        
-        rug(dat, col = "dodgerblue3", lwd = 1)
-        mtext(titlevec[i], side=3, font=2, cex=1.5, line=1)
+        ifelse(is.null(yticks),
+               axis(2, las = 2),
+               axis(2, las = 2, at = yticks, labels = yticks))
+            
+        if(rug) {rug(dat, col = "cornflowerblue", lwd = 1)}
         
         # Optional: add histogram
         if (hist == TRUE) {
@@ -375,35 +394,56 @@ estimate_methods <- function(dat = NULL,
                border = "grey85", axes = FALSE, add = TRUE)
         }
         
-        # Add density estimate
+        # If model is valid, add density estimate
         if (length(modlist_plot[[i]]) > 1) {
-          lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y, col = "deeppink2", lwd = 2)
+          lines(modlist_plot[[i]]$x, modlist_plot[[i]]$y,
+                col = colors[i], lwd = 2)
         }
+        
+        # Create empty label for data-generating distribution
+        truedistlabel = NULL
         
         # Optional: add data-generating normal distribution
         if (length(generatingnormal==2) && is.numeric(generatingnormal)) {
+          truedistlabel <- paste0("Normal(",
+                                  "mean=", generatingnormal[1],", ",
+                                  "sd=", generatingnormal[2],")")
           lines(xvals, dnorm(xvals,
                              mean = generatingnormal[1],
                              sd = generatingnormal[2]), 
                 type = "l", lwd = 1, lty = 2, col = "grey30")
         }
+        
+        # Optional: add data-generating Amoroso distribution
+        if (length(generatingamoroso==4) && is.numeric(generatingamoroso)) {
+          truedistlabel <- paste0("Amoroso(",
+                                  "a=", generatingamoroso[1],", ",
+                                  "l=", generatingamoroso[2],", ",
+                                  "c=", generatingamoroso[3],", ",
+                                  "mu=", generatingamoroso[4],")")
+          lines(xvals, dgg4(xvals,
+                            a = generatingamoroso[1],
+                            l = generatingamoroso[2],
+                            c = generatingamoroso[3],
+                            mu = generatingamoroso[4]),
+                type = "l", lwd = 1, lty = 2, col = "grey30")
+        }
+        
+        # # Add big title at left side
+        # if (is.null(main)) {
+        #   big_title <- paste0("rnorm(", as.character(n), ")")
+        # } else {
+        #   big_title <- main
+        # }
+        # mtext(big_title, outer = TRUE, cex = 1.5, line = 2, font = 2)
       }
     }
-    
-    # Add big title at left side
-    if (is.null(main)) {
-      big_title <- paste0("rnorm(", as.character(n), ")")
-    } else {
-      big_title <- main
-    }
-    mtext(text=big_title, side=2, cex=3, line=1.5, outer=TRUE, font=2)
     
   } else {
     
     print("no plot (since plot = FALSE")
     
   }
-  
   
   #############################
   ### 4. RETURN MODEL LISTS ###

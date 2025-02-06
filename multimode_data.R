@@ -19,7 +19,20 @@ data("galaxy", package = "multimode")
 data("geyser", package = "multimode")
 data("stamps", package = "multimode")
 
+# Glimpse
+glimpse(acidity)
+glimpse(chondrite)
+glimpse(enzyme)
+glimpse(galaxy)
+glimpse(geyser)
+glimpse(stamps)
+
 # Fit the 5 methods to each of the 6 datasets
-estimate_methods(acidity, amoinaplus = FALSE)
-estimate_methods(chondrite, breaks = 10, amoinaplus = FALSE)
-estimate_methods(enzyme, amoinaplus = FALSE)
+estimate_methods(acidity, amoinaplus = F, minimal = T)
+estimate_methods(chondrite, amoinaplus = F, minimal = T)
+estimate_methods(enzyme, amoinaplus = F, minimal = T)
+estimate_methods(galaxy, amoinaplus = F, minimal = T, yticks = c(0.00000,0.00025))
+estimate_methods(geyser, amoinaplus = F, minimal = T)
+estimate_methods(stamps, amoinaplus = F, minimal = T)
+
+glimpse(chondrite)

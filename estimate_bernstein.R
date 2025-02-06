@@ -10,7 +10,8 @@ estimate_bernstein <- function(dat,
                                plot = FALSE,
                                n = 512,
                                main = NULL,
-                               bound_type = "sd") {
+                               bound_type = "sd",
+                               xlim = NULL) {
   
   # Extract vector name
   vecname <- paste0("'", deparse(substitute(dat)), "'")
@@ -33,9 +34,14 @@ estimate_bernstein <- function(dat,
   y_vals <- res$dumd(x_vals)
   
   # Set xlim for plot a little beyond the range of the x values
-  x_span <- range(x_vals)[2]-range(x_vals)[1]
-  x_buffer <- 0.05*x_span
-  xlim <- c((x_min-x_buffer), (x_max+x_buffer))
+  if (is.null(xlim)) {
+    x_span <- range(x_vals)[2]-range(x_vals)[1]
+    x_buffer <- 0.3*x_span
+    xlim <- c((x_min-x_buffer), (x_max+x_buffer))
+  } else {
+    xlim <- xlim
+  }
+
   
   # Create main title
   # -> If custom title specified, add that
@@ -52,14 +58,15 @@ estimate_bernstein <- function(dat,
     hist(dat, breaks = breaks, xlim = xlim, freq = FALSE, main = main,
          xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
     # Add Bernstein fit
-    lines(x_vals, y_vals, col = "magenta3", lwd = 3)
+    lines(x_vals, y_vals, col = "magenta3", lwd = 2)
   }
   
   # Return object
   return(invisible(
       list(res,
            x = x_vals,
-           y = y_vals
+           y = y_vals,
+           xlim = xlim
       )
     )
   )

@@ -382,20 +382,24 @@ estimate_methods <- function(dat = NULL,
 
 ### Test the function ###
 
-#data <- palmerpenguins::penguins$bill_depth_mm
-#dat <- palmerpenguins::penguins$bill_length_mm
+# data <- palmerpenguins::penguins$bill_depth_mm
+# data <- palmerpenguins::penguins$bill_length_mm
 #dat <- palmerpenguins::penguins$flipper_length_mm
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
-set.seed(125)
-data <- rgg4(30, a=4,l=1,c=7,mu=0)
-#data <- rgg4(100, a=4,l=1,c=6,mu=0)
-#data <- rnorm(70, mean = 4, sd = 0.7)
-#data <- rgg4(40, a=4, l=1, c=7, mu=0)
-
-res1 <- estimate_methods(dat = dat, plot_common_x = FALSE)
+# set.seed(125)
+# data <- rgg4(30, a=4,l=1,c=7,mu=0)
+# estimate_bernstein(data, plot=T, bound_type = "sd")
+# data <- rgg4(100, a=4,l=1,c=6,mu=0)
+# data <- rnorm(70, mean = 4, sd = 0.7)
+# data <- rgg4(40, a=4, l=1, c=7, mu=0)
+# 
+# res1 <- estimate_methods(dat = dat, plot_common_x = FALSE)
 #res2 <- estimate_methods(dat = data, plot_common_x = FALSE)
 #res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
 
 #names(res1$modlist_valid_interp)
+
+# estimate_bernstein(data, plot=T, bound_type = "sd")
+# estimate_methods_old(data, plot = TRUE)
