@@ -37,7 +37,8 @@ estimate_methods <- function(dat = NULL,
                              generatingnormal = NULL, #supply mean,sd)
                              generatingamoroso = NULL, #supply (a,l,c,mu)
                              xticks = NULL,
-                             yticks = NULL
+                             yticks = NULL,
+                             ymax = NULL
 ) {
   
   # # For testing
@@ -194,7 +195,12 @@ estimate_methods <- function(dat = NULL,
   #   ymax <- ymaxes[1]
   # }
   hist_list <- hist(dat, breaks=breaks, prob=TRUE)
-  ymax <- max(hist_list$density)
+  if(is.null(ymax)) {
+    ymax <- max(hist_list$density)
+  } else {
+    ymax <- ymax
+  }
+  
   buffer <- 0.15*ymax
   ymax <- ymax + buffer
   
