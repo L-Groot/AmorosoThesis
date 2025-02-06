@@ -2,7 +2,7 @@
 # -> removed Bernstein
 # -> removed adj. KDE "unimodal and adj KDE "twoInflections+"
 # -> removed Amoroso MLE
-# -> force to take only a>0 Amorosos
+# -> optiona to only consider only a>0 Amorosos
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
