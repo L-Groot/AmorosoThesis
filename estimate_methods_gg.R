@@ -1,9 +1,3 @@
-# estimate_methods 3
-# -> removed Bernstein
-# -> removed adj. KDE "unimodal and adj KDE "twoInflections+"
-# -> removed Amoroso MLE
-# -> optiona to only consider only a>0 Amorosos
-
 #-------------------------------------------------------------------------------
 # Load functions and packages
 #-------------------------------------------------------------------------------
@@ -31,8 +25,6 @@ require(gridExtra)
 
 
 
-
-
 #-------------------------------------------------------------------------------
 # Helper functions
 #-------------------------------------------------------------------------------
@@ -52,7 +44,7 @@ safe_execute <- function(expr, object_name, data_vector) {
 # Function to remove NAs and print a warning if necessary
 clean_data <- function(dat) {
   num_nas_to_remove <- sum(is.na(dat))
-  dat <- na.omit(dat)
+  dat <- as.vector(na.omit(dat))
   
   if (num_nas_to_remove > 0) {
     message(sprintf("WARNING: %d NAs were removed from the data.\n", num_nas_to_remove))
@@ -121,7 +113,7 @@ define_plot_limits <- function(dat, modlist_valid, breaks = 20) {
   ymax <- max(sapply(modlist_valid, function(mod) max(mod$y)), na.rm = TRUE)
   
   # Make ymax (either prespecified or dynamically determined)
-  hist_list <- hist(dat, breaks=breaks, prob=TRUE)
+  hist_list <- hist(dat, breaks=breaks, prob=TRUE, plot=F)
   if(is.null(ymax)) {
     ymax <- max(hist_list$density)
   } else {
@@ -146,7 +138,7 @@ define_plot_limits <- function(dat, modlist_valid, breaks = 20) {
 # estimate_methods() function
 #-------------------------------------------------------------------------------
 
-estimate_methods <- function(dat, amoinaplus = TRUE) {
+estimate_methods <- function(dat, amoinaplus = FALSE) {
   dat <- clean_data(dat)  # Remove NAs
   n <- length(dat)  # Get sample size
   
@@ -182,13 +174,13 @@ estimate_methods <- function(dat, amoinaplus = TRUE) {
     }
   })
   
-  return(list(
+  return(invisible(list(
     modlist = modlist,
     modlist_valid_interp = modlist_valid_interp,
     ymax = ymax,
     xmin_plot = xmin_plot,
     xmax_plot = xmax_plot
-  ))
+  )))
 }
 
 
@@ -198,10 +190,16 @@ estimate_methods <- function(dat, amoinaplus = TRUE) {
 # plot_methods function
 #-------------------------------------------------------------------------------
 
-plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
-  
-  # Estimate 5 methods
-  res <- estimate_methods(dat, amoinaplus = amoinaplus)
+plot_methods <- function(dat, res,
+                         plot_common_x = TRUE,
+                         generatingnormal = NULL, #supply mean,sd)
+                         generatingamoroso = NULL, #supply (a,l,c,mu)
+                         xticks = NULL,
+                         yticks = NULL,
+                         ymax = NULL,
+                         xmin = NULL,
+                         xmax = NULL,
+                         bins = 30) {
   
   # Get valid models
   modlist_all <- res$modlist
@@ -211,28 +209,37 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
   # Choose whether to interpolate x-range across models
   modlist_plot <- if (plot_common_x) modlist_valid_interp else modlist_valid
   
-  # Get plot bounds
-  ymax = res$ymax
-  print(ymax)
-  xmin_plot = res$xmin_plot
-  xmax_plot = res$xmax_plot
+  # Determine plot bounds
+  ifelse(is.null(ymax),
+         ymax <- res$ymax,
+         ymax <- ymax)
+  ifelse(is.null(xmin),
+         xmin_plot <- res$xmin_plot,
+         xmin_plot <- xmin)
+  ifelse(is.null(xmax),
+         xmax_plot <- res$xmax_plot,
+         xmax_plot <- xmin)
 
   # Get titles and colors (from your function)
   all_titles <- list(
     rdens = "R density()",
-    scKDE_2infplus = "Adj. KDE ('twoInflections+')",
+    scKDE_2infplus = "Adj. KDE (2Inf+)",
     mnorm = "Mixed Normal",
-    amo_hell_cdf = if (length(modlist_all$amo_hell_cdf) > 1) 
-      paste0("Amoroso (", modlist_all$amo_hell_cdf$method_short, ")") else "",
-    amo_hell_pdf = if (length(modlist_all$amo_hell_pdf) > 1) 
-      paste0("Amoroso (", modlist_all$amo_hell_pdf$method_short, ")") else ""
+    amo_hell_cdf = if (length(modlist_all$amo_hell_cdf) > 1) {
+      sign <- ifelse(modlist_all$amo_hell_cdf$method_short == "HELL-CDF (+)", "+", "-")
+      paste0("Amoroso (Hell-CDF", sign, ")")
+    } else "",
+    amo_hell_pdf = if (length(modlist_all$amo_hell_pdf) > 1) {
+      sign <- ifelse(modlist_all$amo_hell_pdf$method_short == "HELL-CDF (+)", "+", "-")
+      paste0("Amoroso (Hell-CDF", sign, ")")
+    } else ""
   )
   
   # Extract valid model titles
   valid_titles <- all_titles[intersect(names(all_titles), names(modlist_valid))]
   
   # Shorten some titles for clarity
-  valid_titles <- lapply(valid_titles, function(t) gsub("twoInflections\\+", "2Inf+", t))
+  #valid_titles <- lapply(valid_titles, function(t) gsub("'twoInflections\\+'", "2Inf+", t))
   
   # Convert to vector
   titlevec <- unlist(valid_titles)
@@ -273,23 +280,34 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
     # Create the plot for the current method
     p <- ggplot() +
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
-                     bins = 30, fill = "grey85", color = "grey70", alpha = 0.5) +
+                     bins = bins, fill = "grey95", color = "grey85", alpha = 0.5) +
       geom_line(data = method_data, 
-                aes(x = x, y = y), color = color, size = 1) +
+                aes(x = x, y = y), color = color, size = 0.8) +
       labs(title = valid_titles[[meth]], x = NULL, y = "Density") +
       theme_minimal() +
       theme(
         text = element_text(family = "Times"),  # Use Times New Roman
-        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Title size and centering
-        axis.title = element_text(size = 12, face = "bold"),  # Bold axis labels
-        axis.text = element_text(size = 10),  # Axis text size
-        plot.margin = margin(1, 1, 2, 1, "lines"),  # Adjust margins
-        panel.grid.major = element_blank(),  # Remove major grid lines
-        panel.grid.minor = element_blank(),  # Remove minor grid lines
-        panel.background = element_blank(),  # Keep background white
-        axis.line = element_line(color = "black")  # Black axis lines
+        plot.title = element_text(size = 12, face = "bold", hjust = 0.5,
+                                  margin = margin(b = 12)),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text = element_text(size = 10),
+        plot.margin = margin(1, 1, 1, 1, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(color = "black")
       ) +
       coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+    
+    # Apply xticks if not NULL
+    if (!is.null(xticks)) {
+      p <- p + scale_x_continuous(breaks = xticks)
+    }
+    
+    # Apply yticks if not NULL
+    if (!is.null(yticks)) {
+      p <- p + scale_y_continuous(breaks = yticks)
+    }
     
     # Add the plot to the list
     plot_list[[meth]] <- p
@@ -300,6 +318,21 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
 }
 
 
+
+
+#-------------------------------------------------------------------------------
+# Examples
+#-------------------------------------------------------------------------------
+
+# Define data
 dat <- palmerpenguins::penguins$flipper_length_mm
-is.vector(dat)
-plot_methods(dat)
+dat <- palmerpenguins::penguins$bill_length_mm
+dat <- palmerpenguins::penguins$bill_depth_mm
+
+# Estimate models first
+res <- estimate_methods(dat)
+
+# Then plot the results
+plot_methods(dat, res)
+
+             
