@@ -660,5 +660,6 @@ estimate_amoroso <- function(vec = NULL,
 
 #dat <- palmerpenguins::penguins$flipper_length_mm
 #estimate_amoroso(dat, plot = 0, criterion = "ML")
-# res$all_models
+
+
 
