@@ -42,18 +42,18 @@ estimate_methods <- function(dat = NULL,
 ) {
   
   # For testing
-  dat = rnorm(70)
-  plot = TRUE; hist = TRUE; breaks = 20
-  amoinaplus = TRUE
-  minimal = FALSE
-  plot_common_x = TRUE
-  rug = FALSE
-  main = NULL
-  generatingnormal = NULL # supply (mean,sd)
-  generatingamoroso = NULL#supply (a,l,c,mu)
-  xticks = NULL
-  yticks = NULL
-  ymax = NULL
+  # dat = rnorm(70)
+  # plot = TRUE; hist = TRUE; breaks = 20
+  # amoinaplus = TRUE
+  # minimal = FALSE
+  # plot_common_x = TRUE
+  # rug = FALSE
+  # main = NULL
+  # generatingnormal = NULL # supply (mean,sd)
+  # generatingamoroso = NULL #supply (a,l,c,mu)
+  # xticks = NULL
+  # yticks = NULL
+  # ymax = NULL
   
   ########################
   ### HELPER FUNCTION  ###
@@ -472,7 +472,7 @@ estimate_methods <- function(dat = NULL,
 
 #data <- palmerpenguins::penguins$bill_depth_mm
 #dat <- palmerpenguins::penguins$bill_length_mm
-dat <- palmerpenguins::penguins$flipper_length_mm
+#dat <- palmerpenguins::penguins$flipper_length_mm
 #res <- estimate_amoroso_np(dat, hist = TRUE, minimal = FALSE)
 #res$modlist_valid
 
@@ -484,6 +484,6 @@ dat <- palmerpenguins::penguins$flipper_length_mm
 
 #res1 <- estimate_methods(dat = data, plot_common_x = TRUE, generatingnormal = c(4,0.7))
 #res2 <- estimate_methods(dat = data, plot_common_x = TRUE, generatingamoroso = c(4,1,7,0))
-res3 <- estimate_methods(dat = data, plot_common_x = TRUE)
+#res3 <- estimate_methods(dat = dat, plot_common_x = TRUE)
 
 #names(res1$modlist_valid_interp)
