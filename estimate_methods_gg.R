@@ -213,6 +213,7 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
   
   # Get plot bounds
   ymax = res$ymax
+  print(ymax)
   xmin_plot = res$xmin_plot
   xmax_plot = res$xmax_plot
 
@@ -261,17 +262,13 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
   plot_list <- list()
   
   # Loop over each method in valid_titles
-  for (method in names(valid_titles)) {
-    
-    print(method)
+  for (meth in names(valid_titles)) {
     
     # Filter the data for the current method
-    method_data <- df_plot %>% filter(method == method)
+    method_data <- df_plot %>% filter(method == meth)
     
-    print(unique(method_data$method))
-    
+    # Get color for current method
     color <- unique(method_data$color)
-    #print(color)
       
     # Create the plot for the current method
     p <- ggplot() +
@@ -279,20 +276,30 @@ plot_methods <- function(dat, amoinaplus = FALSE, plot_common_x = TRUE) {
                      bins = 30, fill = "grey85", color = "grey70", alpha = 0.5) +
       geom_line(data = method_data, 
                 aes(x = x, y = y), color = color, size = 1) +
-      labs(title = valid_titles[[method]], x = NULL, y = "Density") +
+      labs(title = valid_titles[[meth]], x = NULL, y = "Density") +
       theme_minimal() +
       theme(
-        plot.title = element_text(hjust = 0.5, size = 12),
-        axis.title.y = element_text(size = 10),
-        axis.text = element_text(size = 8)
+        text = element_text(family = "Times"),  # Use Times New Roman
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Title size and centering
+        axis.title = element_text(size = 12, face = "bold"),  # Bold axis labels
+        axis.text = element_text(size = 10),  # Axis text size
+        plot.margin = margin(1, 1, 2, 1, "lines"),  # Adjust margins
+        panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.background = element_blank(),  # Keep background white
+        axis.line = element_line(color = "black")  # Black axis lines
       ) +
       coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
     
-    # Add the plot to the plot_list
-    plot_list[[method]] <- p
+    # Add the plot to the list
+    plot_list[[meth]] <- p
+    
+    # Arrange in a 1-row, 5-column grid
+    grid.arrange(grobs = plot_list, ncol = 5)
   }
-  
-  # Arrange in a 1-row, 5-column grid
-  grid.arrange(grobs = plot_list, ncol = 5)
-  
 }
+
+
+dat <- palmerpenguins::penguins$flipper_length_mm
+is.vector(dat)
+plot_methods(dat)
