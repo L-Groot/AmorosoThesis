@@ -17,7 +17,7 @@ require(mclust)
 # -> for mixed normal density function
 require(LaplacesDemon)
 
-
+# Other packages
 require(ggplot2)
 require(tidyverse)
 require(tidyr)
@@ -279,16 +279,23 @@ plot_methods <- function(dat, res,
       
     # Create the plot for the current method
     p <- ggplot() +
+      # Histogram
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
                      bins = bins, fill = "grey95", color = "grey85", alpha = 0.5) +
+      
+      # Method line
       geom_line(data = method_data, 
                 aes(x = x, y = y), color = color, size = 0.8) +
+      
+      # Jittered data points
+      # geom_jitter(data = hist_data, aes(x = x, y = 0), 
+      #             color = "black", size = 1, alpha = 0.4, width = 0.1) +  # Adjust width to control jittering
+      # 
       labs(title = valid_titles[[meth]], x = NULL, y = "Density") +
       theme_minimal() +
       theme(
         text = element_text(family = "Times"),  # Use Times New Roman
-        plot.title = element_text(size = 12, face = "bold", hjust = 0.5,
-                                  margin = margin(b = 12)),
+        plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
         axis.title = element_text(size = 10, face = "bold"),
         axis.text = element_text(size = 10),
         plot.margin = margin(1, 1, 1, 1, "lines"),
@@ -312,6 +319,7 @@ plot_methods <- function(dat, res,
     # Add the plot to the list
     plot_list[[meth]] <- p
     
+    
     # Arrange in a 1-row, 5-column grid
     grid.arrange(grobs = plot_list, ncol = 5)
   }
@@ -325,14 +333,14 @@ plot_methods <- function(dat, res,
 #-------------------------------------------------------------------------------
 
 # Define data
-dat <- palmerpenguins::penguins$flipper_length_mm
-dat <- palmerpenguins::penguins$bill_length_mm
+#dat <- palmerpenguins::penguins$flipper_length_mm
+#dat <- palmerpenguins::penguins$bill_length_mm
 dat <- palmerpenguins::penguins$bill_depth_mm
 
 # Estimate models first
 res <- estimate_methods(dat)
 
 # Then plot the results
-plot_methods(dat, res)
+plot_methods(dat, res, yticks = c(0,0.25))
 
              
