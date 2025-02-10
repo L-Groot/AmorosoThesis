@@ -6,6 +6,10 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 # (1) Bimodal geyser data
 #-------------------------
 
+# The geyser dataset contains the time intervals between eruptions of the Old
+# Faithful Geyser
+
+# Estimate density with the 5 candidate methods
 geyser_dat <- multimode::geyser
 geyser_res <- estimate_methods(geyser)
 plot_methods(geyser_dat, geyser_res)
@@ -16,9 +20,12 @@ plot_methods(geyser_dat, geyser_res)
 # (2) Unimodal RT data
 #----------------------
 
-# Data from subject number 1 on the 
-s01gs <- read.table("noisedat/S01GS.DAT") %>%
-  # Rename columns
+# Get the reaction times from participant 1 from the simple RT task (press key
+# as fast as possible upon stimulus presentation)
+# Data from "Estimation and Interpretation of 1/f Noise in Human Cognition"
+# (Wagenmakers, Farrell, & Ratcliff, 2002).
+
+s01gs <- read.table("noisedat/S01SS.DAT") %>%
   rename(
     key = V1,
     rt = V2,
@@ -27,14 +34,65 @@ s01gs <- read.table("noisedat/S01GS.DAT") %>%
     rsi = V5,
     stim = V6
   ) %>%
-  # Remove rows with rt < 500ms or > 2500ms
-  filter(rt >= 500 & rt <= 2500)
+  # Compute mean and standard deviation
+  mutate(
+    rt_mean = mean(rt),
+    rt_sd = sd(rt)
+  ) %>%
+  # Remove RTs outside mean ± 2*SD
+  filter(rt >= (rt_mean - 2 * rt_sd) & rt <= (rt_mean + 2 * rt_sd)) %>%
+  # Drop temporary columns
+  select(-rt_mean, -rt_sd)
 
 
-rt_dat <- s01gs
+# Estimate density with the 5 candidate methods
+rt_dat <- s01gs$rt
+# hist(rt_dat, breaks = 30)
 rt_res <- estimate_methods(rt_dat)
+plot_methods(rt_dat, rt_res)
+
+# Estimate ex-gaussian on the data
+install.packages("ExGaussEstim")
+library(ExGaussEstim)
+exGauss_par <- BayesianExgaussian(length(rt_dat), rt_dat, nSamples = 5000, Ti = 2500)
 
 
+# Simulate data from ex-gaussian
+# Use the estimated parameters
+mu <- exGauss_par$mu
+sigma <- exGauss_par$sigma
+tau <- exGauss_par$tau
+# Use same sample size as empirical data
+n <- length(rt_dat)
+# Simulate data
+set.seed(80)
+exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
+#hist(exGauss_simdat, breaks = 20)
+
+# Estimate methods on simulated data
+
+#exGauss_simdat_25 <- exGauss_simdat[1:25]
+#res25 <- estimate_methods(exGauss_simdat_25)
+plot_methods(exGauss_simdat_25, res, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+
+#exGauss_simdat_50 <- exGauss_simdat[1:50]
+#res50 <- estimate_methods(exGauss_simdat_50)
+plot_methods(exGauss_simdat_50, res50, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+
+#exGauss_simdat_75 <- exGauss_simdat[1:75]
+#res75 <- estimate_methods(exGauss_simdat_75)
+plot_methods(exGauss_simdat_75, res75, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+
+#exGauss_simdat_100 <- exGauss_simdat[1:100]
+#res100 <- estimate_methods(exGauss_simdat_100)
+plot_methods(exGauss_simdat_100, res100, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+
+#exGauss_simdat_200 <- exGauss_simdat[1:200]
+#res200 <- estimate_methods(exGauss_simdat_200)
+plot_methods(exGauss_simdat_200, res200, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+
+#resall <- estimate_methods(exGauss_simdat)
+plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
 #--------------------------------
 # (3) Unimodal MCMC samples data
 #--------------------------------
@@ -45,6 +103,9 @@ rt_res <- estimate_methods(rt_dat)
 
 
 
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 bs_and_adjKDE <- function(data, breaks = 20) {
   
   par(mfrow=c(1,6))

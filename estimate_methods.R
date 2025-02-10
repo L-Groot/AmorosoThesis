@@ -22,7 +22,7 @@ require(ggplot2)
 require(tidyverse)
 require(tidyr)
 require(gridExtra)
-
+require(gamlss.dist)
 
 
 #-------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ define_plot_limits <- function(dat, modlist_valid, breaks = 20) {
   ymax <- max(sapply(modlist_valid, function(mod) max(mod$y)), na.rm = TRUE)
   
   # Make ymax (either prespecified or dynamically determined)
-  hist_list <- hist(dat, breaks=breaks, prob=TRUE, plot=F)
+  hist_list <- hist(dat, breaks=breaks, plot=F)
   if(is.null(ymax)) {
     ymax <- max(hist_list$density)
   } else {
@@ -192,8 +192,9 @@ estimate_methods <- function(dat, amoinaplus = FALSE) {
 
 plot_methods <- function(dat, res,
                          plot_common_x = TRUE,
-                         generatingnormal = NULL, #supply mean,sd)
+                         generatingnormal = NULL, #supply (mean,sd)
                          generatingamoroso = NULL, #supply (a,l,c,mu)
+                         generatingexgauss = NULL, #supply (mu,sigma,tau)
                          xticks = NULL,
                          yticks = NULL,
                          ymax = NULL,
@@ -219,7 +220,7 @@ plot_methods <- function(dat, res,
   ifelse(is.null(xmax),
          xmax_plot <- res$xmax_plot,
          xmax_plot <- xmin)
-
+  
   # Get titles and colors (from your function)
   all_titles <- list(
     rdens = "R density()",
@@ -237,9 +238,6 @@ plot_methods <- function(dat, res,
   
   # Extract valid model titles
   valid_titles <- all_titles[intersect(names(all_titles), names(modlist_valid))]
-  
-  # Shorten some titles for clarity
-  #valid_titles <- lapply(valid_titles, function(t) gsub("'twoInflections\\+'", "2Inf+", t))
   
   # Convert to vector
   titlevec <- unlist(valid_titles)
@@ -276,21 +274,48 @@ plot_methods <- function(dat, res,
     
     # Get color for current method
     color <- unique(method_data$color)
-      
+    
     # Create the plot for the current method
     p <- ggplot() +
       # Histogram
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
-                     bins = bins, fill = "grey95", color = "grey85", alpha = 0.5) +
-      
-      # Method line
+                     bins = bins, fill = "grey95", color = "grey85", alpha = 0.5)
+    
+    # Add generatingnormal line if provided
+    if (!is.null(generatingnormal)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
+                             y = dnorm(seq(min(dat), max(dat), length.out = 100), 
+                                       mean = generatingnormal[1], 
+                                       sd = generatingnormal[2])), 
+                         color = "grey", linetype = "dashed", size = 1)
+    }
+    
+    # Add generatingamoroso line if provided
+    if (!is.null(generatingamoroso)) {
+      # Assuming you have the amoroso distribution function, let's call it `dgg4()`
+      p <- p + geom_line(aes(x = seq(min(dat), max(dat), length.out = 100), 
+                             y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100), 
+                                      generatingamoroso[1], generatingamoroso[2], 
+                                      generatingamoroso[3], generatingamoroso[4])), 
+                         color = "grey", linetype = "dashed", size = 1)
+    }
+    
+    # Add generatingexgauss line if provided
+    if (!is.null(generatingexgauss)) {
+      # Assuming you have the amoroso distribution function, let's call it `dgg4()`
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
+                             y = dexGAUS(seq(min(dat), max(dat), length.out = 100), 
+                                      generatingexgauss[1], generatingexgauss[2], 
+                                      generatingexgauss[3])), 
+                         color = "grey70", linetype = "dashed", size = 0.7)
+    }
+    
+    # Add density estimate
+    p <- p + 
       geom_line(data = method_data, 
                 aes(x = x, y = y), color = color, size = 0.8) +
       
-      # Jittered data points
-      # geom_jitter(data = hist_data, aes(x = x, y = 0), 
-      #             color = "black", size = 1, alpha = 0.4, width = 0.1) +  # Adjust width to control jittering
-      # 
+    # Add other stuff
       labs(title = valid_titles[[meth]], x = NULL, y = "Density") +
       theme_minimal() +
       theme(
@@ -316,14 +341,16 @@ plot_methods <- function(dat, res,
       p <- p + scale_y_continuous(breaks = yticks)
     }
     
+    
+    
     # Add the plot to the list
     plot_list[[meth]] <- p
-    
-    
-    # Arrange in a 1-row, 5-column grid
-    grid.arrange(grobs = plot_list, ncol = 5)
   }
+  
+  # Arrange in a 1-row, 5-column grid
+  grid.arrange(grobs = plot_list, ncol = 5)
 }
+
 
 
 
@@ -335,12 +362,6 @@ plot_methods <- function(dat, res,
 # Define data
 #dat <- palmerpenguins::penguins$flipper_length_mm
 #dat <- palmerpenguins::penguins$bill_length_mm
-dat <- palmerpenguins::penguins$bill_depth_mm
-
-# Estimate models first
-res <- estimate_methods(dat)
-
-# Then plot the results
-plot_methods(dat, res, yticks = c(0,0.25))
+#dat <- palmerpenguins::penguins$bill_depth_mm
 
              
