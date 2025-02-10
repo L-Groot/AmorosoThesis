@@ -10,9 +10,9 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 # Faithful Geyser
 
 # Estimate density with the 5 candidate methods
-geyser_dat <- multimode::geyser
-geyser_res <- estimate_methods(geyser)
-plot_methods(geyser_dat, geyser_res)
+# geyser_dat <- multimode::geyser
+# geyser_res <- estimate_methods(geyser)
+# plot_methods(geyser_dat, geyser_res)
 
 
 
@@ -64,45 +64,19 @@ sigma <- exGauss_par$sigma
 tau <- exGauss_par$tau
 # Use same sample size as empirical data
 n <- length(rt_dat)
+
 # Simulate data
 set.seed(80)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
-#hist(exGauss_simdat, breaks = 20)
-
+exGauss_simdat <- exGauss_simdat[1:33]
 # Estimate methods on simulated data
-
-#exGauss_simdat_25 <- exGauss_simdat[1:25]
-#res25 <- estimate_methods(exGauss_simdat_25)
-plot_methods(exGauss_simdat_25, res, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
-
-#exGauss_simdat_50 <- exGauss_simdat[1:50]
-#res50 <- estimate_methods(exGauss_simdat_50)
-plot_methods(exGauss_simdat_50, res50, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
-
-#exGauss_simdat_75 <- exGauss_simdat[1:75]
-#res75 <- estimate_methods(exGauss_simdat_75)
-plot_methods(exGauss_simdat_75, res75, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
-
-#exGauss_simdat_100 <- exGauss_simdat[1:100]
-#res100 <- estimate_methods(exGauss_simdat_100)
-plot_methods(exGauss_simdat_100, res100, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
-
-#exGauss_simdat_200 <- exGauss_simdat[1:200]
-#res200 <- estimate_methods(exGauss_simdat_200)
-plot_methods(exGauss_simdat_200, res200, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
-
 #resall <- estimate_methods(exGauss_simdat)
-plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
+#plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
-# Make gif
-newfilename <- "mygif"
-batch_size <- 10
-max_y <- 0.012
-svgwidth <- 17
-svgheight <- 3.4
-pngwidth <- 3092
 
-make_gif(exGauss_simdat[1:30], "test")
+make_gif(exGauss_simdat, "exGauss_simdat", max_y = 0.01, generatingexgauss = c(mu,sigma,tau),
+         xmin = 130, xmax = 530)
+
 
 
 #--------------------------------
@@ -118,48 +92,48 @@ make_gif(exGauss_simdat[1:30], "test")
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-bs_and_adjKDE <- function(data, breaks = 20) {
-  
-  par(mfrow=c(1,6))
-  
-  bs_sd <- estimate_bernstein(data, plot=TRUE, breaks = breaks, bound_type = "sd")
-  
-  xlim <- bs_sd$xlim
-  
-  bs_carv <- estimate_bernstein(data, plot=TRUE, breaks = breaks, bound_type = "Carv",
-                                xlim = xlim)
-  
-  sc <- scdensity(data, constraint = "unimodal")
-  hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-unimodal",
-       xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
-  lines(sc$x, sc$y, col = "magenta3", lwd = 2)
-
-  sc <- scdensity(data, constraint = "twoInflections")
-  hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-2Inf",
-       xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
-  lines(sc$x, sc$y, col = "magenta3", lwd = 2)
-  
-  sc <- scdensity(data, constraint = "twoInflections+")
-  hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-2Inf+",
-       xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
-  lines(sc$x, sc$y, col = "magenta3", lwd = 2)
-  
-  hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "R density()",
-       xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
-  lines(density(data)$x, density(data)$y, col = "magenta3", lwd = 2)
-  
-}
-
-# erratic behavior of MLE Amoroso
-# CDF and PDF methods tend to be similar
-set.seed(53)
-data <- rnorm(30)
-estimate_amoroso(data, plot = 2)
-estimate_methods(data, plot = TRUE)
-
-
-# undesirable sharp cutoffs from Bernstein sd
-# unreasonably wide fit from Bernstein Carv
-set.seed(28)
-data <- rnorm(50)
-bs_and_adjKDE(data)
+# bs_and_adjKDE <- function(data, breaks = 20) {
+#   
+#   par(mfrow=c(1,6))
+#   
+#   bs_sd <- estimate_bernstein(data, plot=TRUE, breaks = breaks, bound_type = "sd")
+#   
+#   xlim <- bs_sd$xlim
+#   
+#   bs_carv <- estimate_bernstein(data, plot=TRUE, breaks = breaks, bound_type = "Carv",
+#                                 xlim = xlim)
+#   
+#   sc <- scdensity(data, constraint = "unimodal")
+#   hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-unimodal",
+#        xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
+#   lines(sc$x, sc$y, col = "magenta3", lwd = 2)
+# 
+#   sc <- scdensity(data, constraint = "twoInflections")
+#   hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-2Inf",
+#        xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
+#   lines(sc$x, sc$y, col = "magenta3", lwd = 2)
+#   
+#   sc <- scdensity(data, constraint = "twoInflections+")
+#   hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "adjKDE-2Inf+",
+#        xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
+#   lines(sc$x, sc$y, col = "magenta3", lwd = 2)
+#   
+#   hist(data, breaks = breaks, xlim = xlim, freq = FALSE, main = "R density()",
+#        xlab = "Value", ylab = "Density", border = F, col = "#efe5e5")
+#   lines(density(data)$x, density(data)$y, col = "magenta3", lwd = 2)
+#   
+# }
+# 
+# # erratic behavior of MLE Amoroso
+# # CDF and PDF methods tend to be similar
+# set.seed(53)
+# data <- rnorm(30)
+# estimate_amoroso(data, plot = 2)
+# estimate_methods(data, plot = TRUE)
+# 
+# 
+# # undesirable sharp cutoffs from Bernstein sd
+# # unreasonably wide fit from Bernstein Carv
+# set.seed(28)
+# data <- rnorm(50)
+# bs_and_adjKDE(data)
