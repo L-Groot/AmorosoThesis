@@ -219,7 +219,11 @@ plot_methods <- function(dat, res,
          xmin_plot <- xmin)
   ifelse(is.null(xmax),
          xmax_plot <- res$xmax_plot,
-         xmax_plot <- xmin)
+         xmax_plot <- xmax)
+  
+  cat("ymax: ", ymax, "\n")
+  cat("xmin_plot: ", xmin_plot, "\n")
+  cat("xmax_plot: ", xmax_plot, "\n")
   
   # Get titles and colors (from your function)
   all_titles <- list(
@@ -284,7 +288,7 @@ plot_methods <- function(dat, res,
     # Add generatingnormal line if provided
     if (!is.null(generatingnormal)) {
       p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
-                             y = dnorm(seq(min(dat), max(dat), length.out = 100), 
+                             y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100), 
                                        mean = generatingnormal[1], 
                                        sd = generatingnormal[2])), 
                          color = "grey", linetype = "dashed", size = 1)
@@ -293,7 +297,7 @@ plot_methods <- function(dat, res,
     # Add generatingamoroso line if provided
     if (!is.null(generatingamoroso)) {
       # Assuming you have the amoroso distribution function, let's call it `dgg4()`
-      p <- p + geom_line(aes(x = seq(min(dat), max(dat), length.out = 100), 
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
                              y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100), 
                                       generatingamoroso[1], generatingamoroso[2], 
                                       generatingamoroso[3], generatingamoroso[4])), 
@@ -304,7 +308,7 @@ plot_methods <- function(dat, res,
     if (!is.null(generatingexgauss)) {
       # Assuming you have the amoroso distribution function, let's call it `dgg4()`
       p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
-                             y = dexGAUS(seq(min(dat), max(dat), length.out = 100), 
+                             y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100), 
                                       generatingexgauss[1], generatingexgauss[2], 
                                       generatingexgauss[3])), 
                          color = "grey70", linetype = "dashed", size = 0.7)

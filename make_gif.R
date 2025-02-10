@@ -40,13 +40,15 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 
 
 #-------------------------------------------------------------------------------
-make_gif <- function(dat = exGauss_simdat[1:33],
+make_gif <- function(dat = NULL,
                      newfilename = "test",
                      batch_size = 10,
-                     max_y = 0.012,
+                     max_y = NULL,
                      svgwidth = 17,
                      svgheight = 3.4,
                      pngwidth = 3092,
+                     xmin = NULL,
+                     xmax = NULL,
                      generatingnormal = NULL,
                      generatingamoroso = NULL,
                      generatingexgauss = NULL) {
@@ -77,28 +79,32 @@ make_gif <- function(dat = exGauss_simdat[1:33],
     tmp <- tempfile()
     svglite::svglite(tmp, width = svgwidth, height = svgheight)
     res <- estimate_methods(batch_data)
+    
     if (!is.null(generatingnormal)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
                    generatingnormal = c(pars[1],pars[2]))
-    }
-    if (!is.null(generatingamoroso)) {
+    } else if (!is.null(generatingamoroso)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
                    generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]))
-    }
-    if (!is.null(generatingexgauss)) {
+    } else if (!is.null(generatingexgauss)) {
       pars <- generatingexgauss
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
                    generatingexgauss = c(pars[1],pars[2],pars[3]))
+    } else {
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax)
     }
+    
     dev.off()
     
     
     # Construct dynamic filename
     filename <- file.path(rawimg_folder, sprintf("img%03d.png", i))
-    print(filename)
-    
     # Save image
     rsvg_png(tmp, filename, width = pngwidth)
   }
@@ -106,14 +112,39 @@ make_gif <- function(dat = exGauss_simdat[1:33],
   # Add remaining observations in the last batch
   if (remaining > 0) {
     batch_data <- dat  # Take all observations
+    glimpse(batch_data)
     
     tmp <- tempfile()
     svglite::svglite(tmp, width = svgwidth, height = svgheight)
-    estimate_methods(dat, minimal = TRUE, yticks = c(0, max_y), ymax = max_y)
+    res <- estimate_methods(batch_data)
+    
+    if (!is.null(generatingnormal)) {
+      pars <- generatingamoroso
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
+                   generatingnormal = c(pars[1],pars[2]))
+    } else if (!is.null(generatingamoroso)) {
+      pars <- generatingamoroso
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
+                   generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]))
+    } else if (!is.null(generatingexgauss)) {
+      pars <- generatingexgauss
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
+                   generatingexgauss = c(pars[1],pars[2],pars[3]))
+    } else {
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax)
+    }
+    
     dev.off()
     
-    filename <- file.path(rawimg_folder, sprintf("img%03d.png", num_full_batches + 1))
+    # Construct dynamic filename
+    filename <- file.path(rawimg_folder, sprintf("img%03d.png", i))
+    # Save image
     rsvg_png(tmp, filename, width = pngwidth)
+    
   }
   
   print(paste("Plots saved in", newfilename, "folder."))
@@ -136,4 +167,6 @@ make_gif <- function(dat = exGauss_simdat[1:33],
   print(paste("GIF saved at:", gif_filename))
   
 }
+
+#make_gif()
 
