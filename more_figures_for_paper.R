@@ -73,26 +73,38 @@ exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 
 #exGauss_simdat_25 <- exGauss_simdat[1:25]
 #res25 <- estimate_methods(exGauss_simdat_25)
-plot_methods(exGauss_simdat_25, res, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat_25, res, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
 #exGauss_simdat_50 <- exGauss_simdat[1:50]
 #res50 <- estimate_methods(exGauss_simdat_50)
-plot_methods(exGauss_simdat_50, res50, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat_50, res50, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
 #exGauss_simdat_75 <- exGauss_simdat[1:75]
 #res75 <- estimate_methods(exGauss_simdat_75)
-plot_methods(exGauss_simdat_75, res75, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat_75, res75, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
 #exGauss_simdat_100 <- exGauss_simdat[1:100]
 #res100 <- estimate_methods(exGauss_simdat_100)
-plot_methods(exGauss_simdat_100, res100, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat_100, res100, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
 #exGauss_simdat_200 <- exGauss_simdat[1:200]
 #res200 <- estimate_methods(exGauss_simdat_200)
-plot_methods(exGauss_simdat_200, res200, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat_200, res200, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
 
 #resall <- estimate_methods(exGauss_simdat)
-plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.0125), generatingexgauss = c(mu,sigma,tau))
+plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
+
+# Make gif
+newfilename <- "mygif"
+batch_size <- 10
+max_y <- 0.012
+svgwidth <- 17
+svgheight <- 3.4
+pngwidth <- 3092
+
+make_gif(exGauss_simdat[1:30], "test")
+
+
 #--------------------------------
 # (3) Unimodal MCMC samples data
 #--------------------------------
