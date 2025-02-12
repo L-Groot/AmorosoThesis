@@ -49,10 +49,15 @@ s01gs <- read.table("noisedat/S01SS.DAT") %>%
 rt_dat <- s01gs$rt
 # hist(rt_dat, breaks = 30)
 rt_res <- estimate_methods(rt_dat)
-plot_methods(rt_dat, rt_res)
+plot_methods(rt_dat, rt_res, yticks = c(0,0.01))
+
+geyser_res <- estimate_methods(geyser)
+plot_methods(geyser, geyser_res, yticks = c(0,0.05))
+
+
 
 # Estimate ex-gaussian on the data
-install.packages("ExGaussEstim")
+#install.packages("ExGaussEstim")
 library(ExGaussEstim)
 exGauss_par <- BayesianExgaussian(length(rt_dat), rt_dat, nSamples = 5000, Ti = 2500)
 
@@ -68,7 +73,7 @@ n <- length(rt_dat)
 # Simulate data
 set.seed(80)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
-exGauss_simdat <- exGauss_simdat[1:33]
+#exGauss_simdat <- exGauss_simdat[1:33]
 # Estimate methods on simulated data
 #resall <- estimate_methods(exGauss_simdat)
 #plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
