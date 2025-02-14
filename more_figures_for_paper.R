@@ -2,6 +2,8 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 
+library(spatstat)
+
 #-------------------------
 # (1) Bimodal geyser data
 #-------------------------
@@ -46,13 +48,13 @@ s01gs <- read.table("noisedat/S01SS.DAT") %>%
 
 
 # Estimate density with the 5 candidate methods
-rt_dat <- s01gs$rt
+rt_dat <- s01gs$rt 
 # hist(rt_dat, breaks = 30)
 rt_res <- estimate_methods(rt_dat)
 plot_methods(rt_dat, rt_res, yticks = c(0,0.01))
 
-geyser_res <- estimate_methods(geyser)
-plot_methods(geyser, geyser_res, yticks = c(0,0.05))
+#geyser_res <- estimate_methods(geyser)
+#plot_methods(geyser, geyser_res, yticks = c(0,0.05))
 
 
 
@@ -62,34 +64,32 @@ library(ExGaussEstim)
 exGauss_par <- BayesianExgaussian(length(rt_dat), rt_dat, nSamples = 5000, Ti = 2500)
 
 
-# Simulate data from ex-gaussian
-# Use the estimated parameters
+# Get the estimated parameters
 mu <- exGauss_par$mu
 sigma <- exGauss_par$sigma
 tau <- exGauss_par$tau
-# Use same sample size as empirical data
+
+# Use same sample size as original empirical data
 n <- length(rt_dat)
 
-# Simulate data
+# Simulate data from estimated ex-Gaussian
 set.seed(80)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
-#exGauss_simdat <- exGauss_simdat[1:33]
-# Estimate methods on simulated data
-#resall <- estimate_methods(exGauss_simdat)
-#plot_methods(exGauss_simdat, resall, ymax = 0.012, yticks = c(0,0.012), generatingexgauss = c(mu,sigma,tau))
+
+# Make gif that shows 5 methods' fits to the exGauss dat as sample size increases
+#make_gif(exGauss_simdat, "exGauss_simdat", max_y = 0.01, generatingexgauss = c(mu,sigma,tau),
+#         xmin = 130, xmax = 530)
 
 
-make_gif(exGauss_simdat, "exGauss_simdat", max_y = 0.01, generatingexgauss = c(mu,sigma,tau),
-         xmin = 130, xmax = 530)
+# Make plots that show how R density vs Amoroso fit the simulated data at diff n
+res <- rt_res
+dat <- exGauss_simdat
 
 
 
 #--------------------------------
 # (3) Unimodal MCMC samples data
 #--------------------------------
-
-
-
 
 
 
