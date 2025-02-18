@@ -2,8 +2,6 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 
-library(spatstat)
-
 #-------------------------
 # (1) Bimodal geyser data
 #-------------------------
@@ -11,10 +9,11 @@ library(spatstat)
 # The geyser dataset contains the time intervals between eruptions of the Old
 # Faithful Geyser
 
+# Figure 1
 # Estimate density with the 5 candidate methods
-# geyser_dat <- multimode::geyser
-# geyser_res <- estimate_methods(geyser)
-# plot_methods(geyser_dat, geyser_res)
+geyser_dat <- multimode::geyser
+geyser_res <- estimate_methods(geyser_dat)
+plot_methods(geyser_dat, geyser_res, yticks = c(0,0.05))
 
 
 
@@ -46,23 +45,15 @@ s01gs <- read.table("noisedat/S01SS.DAT") %>%
   # Drop temporary columns
   select(-rt_mean, -rt_sd)
 
-
+# Figure 2
 # Estimate density with the 5 candidate methods
-rt_dat <- s01gs$rt 
-# hist(rt_dat, breaks = 30)
+rt_dat <- s01gs$rt
 rt_res <- estimate_methods(rt_dat)
 plot_methods(rt_dat, rt_res, yticks = c(0,0.01))
 
-#geyser_res <- estimate_methods(geyser)
-#plot_methods(geyser, geyser_res, yticks = c(0,0.05))
-
-
-
 # Estimate ex-gaussian on the data
-#install.packages("ExGaussEstim")
 library(ExGaussEstim)
 exGauss_par <- BayesianExgaussian(length(rt_dat), rt_dat, nSamples = 5000, Ti = 2500)
-
 
 # Get the estimated parameters
 mu <- exGauss_par$mu
@@ -73,17 +64,210 @@ tau <- exGauss_par$tau
 n <- length(rt_dat)
 
 # Simulate data from estimated ex-Gaussian
-set.seed(80)
+set.seed(79)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 
-# Make gif that shows 5 methods' fits to the exGauss dat as sample size increases
+# Make GIF to visualize how 5 methods fit the data as more samples become available
 #make_gif(exGauss_simdat, "exGauss_simdat", max_y = 0.01, generatingexgauss = c(mu,sigma,tau),
 #         xmin = 130, xmax = 530)
 
 
 # Make plots that show how R density vs Amoroso fit the simulated data at diff n
-res <- rt_res
-dat <- exGauss_simdat
+
+# Define the sample sizes
+n_vec <- c(25, 50, 75, 100)
+
+# Initialize final list
+final_list <- list()
+
+# Loop over each sample size
+for (n in n_vec) {
+  # Extract first n observations
+  dat <- exGauss_simdat[1:n]
+
+  # Estimate methods
+  res <- estimate_methods(dat)
+
+  # Get maxL amo
+  maxL_amo_id <- hellcdf_vs_hellpdf(dat)$maxL_amo
+
+  # Store in a list
+  final_list[[paste0("list_", n)]] <- list(
+    dat = dat,
+    res = res,
+    maxL_amo_id = maxL_amo_id
+  )
+}
+
+
+##########
+# n = 25 #
+##########
+# Extract object
+dat <- final_list$list_25$dat
+res <- final_list$list_25$res
+
+# Fit plots
+fit_rdens_amo <- plot_rdens_amo(dat, res, xmin = 100, xmax = 600, ymax = 0.012,
+                                yticks = c(0,0.012),
+                                generatingexgauss = c(mu, sigma, tau))
+fit_rdens <- fit_rdens_amo[[1]]
+fit_amo <- fit_rdens_amo[[2]]
+
+
+# Q-Q plots
+qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau),
+                           rev = F)
+qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau),
+                         rev = F)
+# P-P plots
+pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+pp_amo <- theoretical_pp(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau))
+# Arrange them
+final_plot_25 <- (fit_rdens + (qq_rdens / pp_rdens) + 
+                     fit_amo + (qq_amo / pp_amo)) +
+  plot_layout(ncol = 4, widths = c(3, 1, 3, 1)) +
+  plot_annotation(
+    title = "n = 25",
+    theme = theme(
+      plot.title = element_text(family = "Times New Roman", size = 20, face = "bold", hjust = 0.5)
+    )
+  )
+
+# Display final plot
+final_plot_25
+
+
+##########
+# n = 50 #
+##########
+# Extract object
+dat <- final_list$list_50$dat
+res <- final_list$list_50$res
+
+# Fit plots
+fit_rdens_amo <- plot_rdens_amo(dat, res, xmin = 100, xmax = 600, ymax = 0.012,
+                                yticks = c(0,0.012),
+                                generatingexgauss = c(mu, sigma, tau))
+fit_rdens <- fit_rdens_amo[[1]]
+fit_amo <- fit_rdens_amo[[2]]
+
+# Q-Q plots
+qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau),
+                         rev = TRUE)
+
+# P-P plots
+pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+pp_amo <- theoretical_pp(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau))
+
+# Arrange them
+final_plot_50 <- (fit_rdens + (qq_rdens / pp_rdens) + 
+                     fit_amo + (qq_amo / pp_amo)) +
+  plot_layout(ncol = 4, widths = c(3, 1, 3, 1)) +
+  plot_annotation(
+    title = "n = 50",
+    theme = theme(
+      plot.title = element_text(family = "Times New Roman", size = 20, face = "bold", hjust = 0.5)
+    )
+  )
+
+# Display final plot
+final_plot_50
+
+
+##########
+# n = 75 #
+##########
+# Extract objects
+dat <- final_list$list_75$dat
+res <- final_list$list_75$res
+
+# Fit plots
+fit_rdens_amo <- plot_rdens_amo(dat, res, xmin = 100, xmax = 600, ymax = 0.012,
+                                yticks = c(0,0.012),
+                                generatingexgauss = c(mu, sigma, tau))
+
+fit_rdens <- fit_rdens_amo[[1]]
+fit_amo <- fit_rdens_amo[[2]]
+
+# Q-Q plots
+qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau),
+                         rev = TRUE)
+
+# P-P plots
+pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+pp_amo <- theoretical_pp(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau))
+
+# Arrange them
+final_plot_75 <- (fit_rdens + (qq_rdens / pp_rdens) + 
+                     fit_amo + (qq_amo / pp_amo)) +
+  plot_layout(ncol = 4, widths = c(3, 1, 3, 1)) +
+  plot_annotation(
+    title = "n = 75",
+    theme = theme(
+      plot.title = element_text(family = "Times New Roman", size = 20, face = "bold", hjust = 0.5)
+    )
+  )
+
+# Display final plot
+final_plot_75
+
+
+###########
+# n = 100 #
+###########
+# Extract object
+dat <- final_list$list_100$dat
+res <- final_list$list_100$res
+
+# Fit plots
+fit_rdens_amo <- plot_rdens_amo(dat, res, xmin = 100, xmax = 600, ymax = 0.012,
+                                yticks = c(0,0.012),
+                                generatingexgauss = c(mu, sigma, tau))
+fit_rdens <- fit_rdens_amo[[1]]
+fit_amo <- fit_rdens_amo[[2]]
+
+# Q-Q plots
+qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau),
+                         rev = TRUE)
+
+# P-P plots
+pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
+                           generatingexgauss = c(mu,sigma,tau))
+pp_amo <- theoretical_pp(dat, res, method_id = maxL_amo_id,
+                         generatingexgauss = c(mu,sigma,tau))
+
+# Arrange them
+final_plot_100 <- (fit_rdens + (qq_rdens / pp_rdens) + 
+                     fit_amo + (qq_amo / pp_amo)) +
+  plot_layout(ncol = 4, widths = c(3, 1, 3, 1)) +
+  plot_annotation(
+    title = "n = 100",
+    theme = theme(
+      plot.title = element_text(family = "Times New Roman", size = 20, face = "bold", hjust = 0.5)
+    )
+  )
+
+# Display final plot
+final_plot_100
+
 
 
 

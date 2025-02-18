@@ -24,6 +24,7 @@ require(tidyr)
 require(gridExtra)
 require(gamlss.dist)
 require(tidymodels)
+library(spatstat)
 
 
 #-------------------------------------------------------------------------------
@@ -202,7 +203,7 @@ plot_methods <- function(dat, res,
                          xmin = NULL,
                          xmax = NULL,
                          bins = 30) {
-  
+
   # Get valid models
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid
@@ -237,7 +238,7 @@ plot_methods <- function(dat, res,
     } else "",
     amo_hell_pdf = if (length(modlist_all$amo_hell_pdf) > 1) {
       sign <- ifelse(modlist_all$amo_hell_pdf$method_short == "HELL-CDF (+)", "+", "-")
-      paste0("Amoroso (Hell-CDF", sign, ")")
+      paste0("Amoroso (Hell-PDF", sign, ")")
     } else ""
   )
   
@@ -284,7 +285,7 @@ plot_methods <- function(dat, res,
     p <- ggplot() +
       # Histogram
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
-                     bins = bins, fill = "grey95", color = "grey85", alpha = 0.5)
+                     bins = bins, fill = "grey85", color = "grey75", alpha = 0.5)
     
     # Add generatingnormal line if provided
     if (!is.null(generatingnormal)) {
@@ -292,7 +293,7 @@ plot_methods <- function(dat, res,
                              y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100), 
                                        mean = generatingnormal[1], 
                                        sd = generatingnormal[2])), 
-                         color = "grey", linetype = "dashed", size = 1)
+                         color = "grey60", linetype = "dashed", size = 1)
     }
     
     # Add generatingamoroso line if provided
@@ -302,7 +303,7 @@ plot_methods <- function(dat, res,
                              y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100), 
                                       generatingamoroso[1], generatingamoroso[2], 
                                       generatingamoroso[3], generatingamoroso[4])), 
-                         color = "grey", linetype = "dashed", size = 1)
+                         color = "grey60", linetype = "dashed", size = 1)
     }
     
     # Add generatingexgauss line if provided
@@ -312,7 +313,7 @@ plot_methods <- function(dat, res,
                              y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100), 
                                       generatingexgauss[1], generatingexgauss[2], 
                                       generatingexgauss[3])), 
-                         color = "grey70", linetype = "dashed", size = 0.7)
+                         color = "grey60", linetype = "dashed", size = 0.7)
     }
     
     # Add density estimate
@@ -561,7 +562,7 @@ plot_rdens_amo <- function(dat, res,
   grid.arrange(grobs = plot_list, ncol = 2)
   
   # Return the plot list
-  # return(plot_list)
+  return(plot_list)
   
 }
 
@@ -577,7 +578,19 @@ theoretical_qq <- function(dat, res, method_id = "rdens",
                     generatingnormal = NULL,
                     generatingamoroso = NULL,
                     generatingexgauss = NULL,
-                    lower_tail = FALSE) {
+                    lower_tail = TRUE,
+                    par_on_axislab = FALSE,
+                    rev = TRUE) {
+  
+  # dat = exGauss_simdat
+  # res = estimate_methods(dat)
+  # method_id = "amo_hell_pdf"
+  # generatingnormal = NULL
+  # generatingamoroso = NULL
+  # generatingexgauss = c(mu,sigma,tau)
+  # lower_tail = TRUE
+  # par_on_axislab = FALSE
+  # rev = F
   
   # Check if exactly one of the generating arguments is not NULL
   non_null_args <- sum(!sapply(list(generatingnormal, generatingamoroso,
@@ -598,34 +611,54 @@ theoretical_qq <- function(dat, res, method_id = "rdens",
   
   # Get fit quantiles
   if(method_id == "rdens") {
-    fit_quantiles <- quantile(density(dat), probs = seq(0.00001,0.99999,0.025))
+    fit_quantiles <- quantile(density(dat), probs = seq(0.01,0.99,length.out=50))
     ylab <- "Fit quantiles: R density()"
   } else if (startsWith(method_id, "amo")) {
     pars <- fit$pars
-    fit_quantiles <- qgg4(seq(0.00001,0.99999,0.025), pars[1],pars[2],pars[3],pars[4],
+    fit_quantiles <- qgg4(seq(0.01,0.99,length.out=50), pars[1],pars[2],pars[3],pars[4],
                           lower.tail = lower_tail)
-    ylab <- paste0("Fit quantiles: Amoroso(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1),", ",
-                   round(pars[4],1),")")
+    if(par_on_axislab) {
+      ylab <- paste0("Fit quantiles: Amoroso(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1),", ",
+                     round(pars[4],1),")")
+    } else {
+      ylab <- "Fit quantiles: Amoroso"
+    }
   }
+  if(rev) fit_quantiles <- rev(fit_quantiles)
   
   # Get theoretical quantiles (from data-generating distribution)
   if (!is.null(generatingnormal)) {
     pars <- generatingnormal
-    true_quantiles <- qnorm(seq(0.00001,0.99999,0.025), pars[1], pars[2])
-    xlab <- paste0("True quantiles: Normal(", round(pars[1],1),", ",
-                   round(pars[2],1), ")")
+    true_quantiles <- qnorm(seq(0.01,0.99,length.out=50), pars[1], pars[2])
+    if (par_on_axislab) {
+      xlab <- paste0("True quantiles: Normal(", round(pars[1],1),", ",
+                     round(pars[2],1), ")")
+    } else {
+      xlab <- "True quantiles: Normal"
+    }
+    
   } else if (!is.null(generatingamoroso)) {
     pars <- generatingamoroso
-    true_quantiles <- qgg4(seq(0.00001,0.99999,0.025), pars[1], pars[2], pars[3], pars[4])
-    xlab <- paste0("True quantiles: Amoroso(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1),", ",
-                   round(pars[4],1),")")
+    true_quantiles <- qgg4(seq(0.01,0.99,length.out=50), pars[1], pars[2], pars[3], pars[4])
+    if (par_on_axislab) {
+      xlab <- paste0("True quantiles: Amoroso(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1),", ",
+                     round(pars[4],1),")")
+    } else {
+      xlab <- "True quantiles: Amoroso"
+    }
+    
   } else if (!is.null(generatingexgauss)) {
     pars <- generatingexgauss
-    true_quantiles <- qexGAUS(seq(0.00001,0.99999,0.025), pars[1], pars[2], pars[3])
-    xlab <- paste0("True quantiles: ExGauss(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1), ")")
+    true_quantiles <- qexGAUS(seq(0.01,0.99,length.out=50), pars[1], pars[2], pars[3])
+    if (par_on_axislab) {
+      xlab <- paste0("True quantiles: ExGauss(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1), ")")
+    } else {
+      xlab <- "True quantiles: ExGauss"
+    }
+    
   }
   
   # Function to replace Inf/-Inf with 0 and throw a warning
@@ -649,8 +682,8 @@ theoretical_qq <- function(dat, res, method_id = "rdens",
   
   # Make Q-Q plot
   p <- ggplot(plot_data, aes(x = True_Quantiles, y = Fit_Quantiles)) +
-          geom_point(size = 2, color = "deepskyblue4") +
-          geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "deeppink3") +
+          geom_point(size = 1, color = "chartreuse4") +
+          geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkorange3") +
           labs(
             title = "Q-Q plot",
             x = xlab,
@@ -681,7 +714,15 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
                            generatingnormal = NULL,
                            generatingamoroso = NULL,
                            generatingexgauss = NULL,
-                           lower_tail = FALSE) {
+                           lower_tail = TRUE,
+                           par_on_axislab = FALSE) {
+  
+  # method_id = "amo_hell_pdf"
+  # generatingnormal = NULL
+  # generatingamoroso = NULL
+  # generatingexgauss = c(mu,sigma,tau)
+  # lower_tail = TRUE
+  # par_on_axislab = FALSE
   
   # Check if exactly one of the generating arguments is not NULL
   non_null_args <- sum(!sapply(list(generatingnormal, generatingamoroso,
@@ -700,11 +741,17 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
   df <- data.frame(x = fit$y)
   
   # Define x range
-  x <- seq(min(dat), max(dat), length.out = 50)
+  #x <- seq(min(exGauss_simdat), max(exGauss_simdat), length.out = 50)
+  x_min <- quantile(exGauss_simdat, 0.10)
+  x_max <- quantile(exGauss_simdat, 0.90)
+  
+  # Generate sequence between the 10th and 90th percentiles
+  x <- seq(x_min, x_max, length.out = 50)
   
   ### FIT CDF probabilites ###
   
   if(method_id == "rdens") {
+    print("Fit is R density()")
     # Approximate function using linear interpolation
     f <- approxfun(fit$x, fit$y, method = "linear", yleft = 0, yright = 0)
     # Get integral (CDF prob) at each x value
@@ -713,47 +760,71 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
       integral <- integrate(f, -Inf, xval)$value
       fit_percentiles <- append(fit_percentiles, integral)
     }
+    # Replace zeroes in tail with 1
+    # Find the position of the last nonzero element
+    #last_nonzero <- max(which(fit_percentiles != 0))
+    # Replace all trailing zeros with 1
+    #fit_percentiles[(last_nonzero + 1):length(fit_percentiles)] <- 1
     ylab <- "Fit percentile: R density()"
     
   } else if (startsWith(method_id, "amo")) {
+    print("Fit is Amoroso")
     # Extract Amoroso fit parameters
     pars <- fit$pars
     # Get integral (CDF prob) at each x value
     fit_percentiles <- AmoRosoDistrib::pgg4(x, pars[1], pars[2], pars[3], pars[4])
-    ylab <- paste0("Fit percentiles: Amoroso(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1),", ",
-                   round(pars[4],1),")")
+    if (par_on_axislab) {
+      ylab <- paste0("Fit percentiles: Amoroso(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1),", ",
+                     round(pars[4],1),")")
+    } else {
+      ylab <- "Fit percentiles: Amoroso"
+    } 
   }
   
   ### TRUE CDF probabilites ###
   
   # True Normal
   if (!is.null(generatingnormal)) {
-    print("True Normal")
+    print("True is Normal")
     pars <- c(generatingnormal[1], generatingnormal[2])
     true_percentiles <- pnorm(x, pars[1], pars[2], lower.tail = lower_tail)
-    xlab <- paste0("True percentiles: Normal(", round(pars[1],1),", ",
-                   round(pars[2],1), ")")
+    if (par_on_axislab) {
+      xlab <- paste0("True percentiles: Normal(", round(pars[1],1),", ",
+                     round(pars[2],1), ")")
+    } else {
+      xlab <- "True percentiles: Normal"
+    }
+    
   
   # True Amoroso
   } else if (!is.null(generatingamoroso)) {
-    print("True Amoroso")
+    print("True is Amoroso")
     pars <- c(generatingamoroso[1], generatingamoroso[2], generatingamoroso[3],
               generatingamoroso[4])
     true_percentiles <- AmoRosoDistrib::pgg4(x, pars[1], pars[2], pars[3], pars[4],
                                           lower.tail = lower_tail)
-    xlab <- paste0("True percentiles: Amoroso(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1),", ",
-                   round(pars[4],1),")")
+    if (par_on_axislab) {
+      xlab <- paste0("True percentiles: Amoroso(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1),", ",
+                     round(pars[4],1),")")
+    } else {
+      xlab <- "True percentiles: Amoroso"
+    }
+    
     
   # True exGauss
   } else if (!is.null(generatingexgauss)) {
-    print("True exGauss")
+    print("True is exGauss")
     pars <- c(generatingexgauss[1], generatingexgauss[2], generatingexgauss[3])
     true_percentiles <- gamlss.dist::pexGAUS(x, pars[1], pars[2], pars[3],
                                              lower.tail = lower_tail)
-    xlab <- paste0("True percentiles: ExGauss(", round(pars[1],1),", ",
-                   round(pars[2],1),", ", round(pars[3],1), ")")
+    if (par_on_axislab) {
+      xlab <- paste0("True percentiles: ExGauss(", round(pars[1],1),", ",
+                     round(pars[2],1),", ", round(pars[3],1), ")")
+    } else {
+      xlab <- "True percentiles: ExGauss"
+    }
   }
   
   ### Make P-P plot ###
@@ -766,8 +837,8 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
 
   # Plot
   p <- ggplot(plot_data, aes(x = True_Percentiles, y = Fit_Percentiles)) +
-    geom_point(size = 2, color = "deepskyblue4") +
-    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "deeppink3") +
+    geom_point(size = 1, color = "chartreuse4") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkorange3") +
     labs(
       title = "P-P plot",
       x = xlab,
