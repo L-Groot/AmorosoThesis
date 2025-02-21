@@ -424,12 +424,6 @@ plot_rdens_amo <- function(dat, res,
   # xmax <- 530
   # ymax <- 0.01
   
-  xmin = 100
-  xmax = 600
-  ymax = 0.012
-  yticks = c(0,0.012)
-  generatingexgauss = c(mu, sigma, tau)
-  
   # Get valid models
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid

@@ -10,6 +10,16 @@ get_pp <- function(
   {
   
   #-----------------------------------------------------------------------------
+  set.seed(134)
+  dat <- rnorm(100)
+  method = "k-fold"
+  k = 5
+  prop_train = 0.8
+  generating_amoroso = NULL
+  generating_normal = c(0,1)
+  seed = 125
+  
+  #-----------------------------------------------------------------------------
   validate_inputs <- function() {
     if (!is.null(generating_amoroso) && !is.null(generating_normal)) {
       stop("Specify EITHER Amoroso OR Normal as the generating distribution.")
@@ -60,11 +70,11 @@ get_pp <- function(
   #----------------------------------------------------------------------------
   fit_and_predict <- function(train, test, np_methods) {
     
-    res <- estimate_methods(train, hist = TRUE, amoinaplus = TRUE)
+    res <- estimate_methods(train, amoinaplus = TRUE)
     res_interp <- res$modlist_valid_interp
     
     pred_list <- list(
-      mnorm = predict_mnorm(test, res$modlist_valid$mnorm, plot = FALSE),
+      mnorm = predict_mnorm(test, res$modlist$mnorm, plot = FALSE),
       #amo_mle = predict_amo(test, "amo_mle", res),
       amo_hell_cdf = predict_amo(test, "amo_hell_cdf", res),
       amo_hell_pdf = predict_amo(test, "amo_hell_pdf", res)

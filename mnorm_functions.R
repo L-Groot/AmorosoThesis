@@ -12,7 +12,7 @@ mixed_normal_pdf <- function(x, propvec, meanvec, varvec) {
 # Function that predicts new data from a densityMclust() mixed normal model
 
 predict_mnorm <- function(x, mod, plot=TRUE, breaks=20) {
-  
+
   # Weight vector (weight of each component)
   propvec <- mod$parameters$pro
   propvec <- propvec / sum(propvec) # Normalize to make sure it sums to exactly 1
