@@ -326,7 +326,8 @@ get_pp <- function(
     
     # Combine both logL and medL into one data frame (if required)
     avg_pp_df <- data.frame(logL_avg = logL_df$avg_logL,
-                                     med_avg = medL_df$avg_medL)
+                            medL_avg = medL_df$avg_medL,
+                            mse_avg= mse_df$avg_mse)
     
     # If data-generating distribution is known:
     if (length(logL_prop_df) > 1 && length(medL_prop_df) > 1) {
@@ -337,6 +338,11 @@ get_pp <- function(
       avg_pp_df$mse_avg <- mse_df$avg_mse
     }
     
+    # Add column with method names
+    avg_pp_df %>%
+      mutate(method = rownames(pp_df)) %>%
+      select(method, everything())
+
     # Make the rownames the methods
     rownames(avg_pp_df) <- rownames(pp_df)
     
