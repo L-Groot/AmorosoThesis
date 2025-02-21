@@ -285,7 +285,7 @@ plot_methods <- function(dat, res,
     p <- ggplot() +
       # Histogram
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
-                     bins = bins, fill = "grey85", color = "grey75", alpha = 0.5)
+                     bins = bins, fill = "grey90", color = "grey80", alpha = 0.5)
     
     # Add generatingnormal line if provided
     if (!is.null(generatingnormal)) {
@@ -416,12 +416,19 @@ plot_rdens_amo <- function(dat, res,
                          ymax = NULL,
                          xmin = NULL,
                          xmax = NULL,
+                         rug = T,
                          bins = 30) {
   
   # dat <- exGauss_simdat
   # xmin <- 130
   # xmax <- 530
   # ymax <- 0.01
+  
+  xmin = 100
+  xmax = 600
+  ymax = 0.012
+  yticks = c(0,0.012)
+  generatingexgauss = c(mu, sigma, tau)
   
   # Get valid models
   modlist_all <- res$modlist
@@ -492,6 +499,10 @@ plot_rdens_amo <- function(dat, res,
       # Histogram
       geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
                      bins = bins, fill = "grey95", color = "grey85", alpha = 0.5)
+    # Optional: Add rug marks to show individual data points
+    if (rug) {
+      p <- p + geom_rug(data = hist_data, aes(x = x), color = "black", alpha = 0.6)
+    }
     
     # Add generatingnormal line if provided
     if (!is.null(generatingnormal)) {
@@ -682,7 +693,7 @@ theoretical_qq <- function(dat, res, method_id = "rdens",
   
   # Make Q-Q plot
   p <- ggplot(plot_data, aes(x = True_Quantiles, y = Fit_Quantiles)) +
-          geom_point(size = 1, color = "chartreuse4") +
+          geom_point(size = 0.5, color = "chartreuse4") +
           geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkorange3") +
           labs(
             title = "Q-Q plot",
@@ -837,7 +848,7 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
 
   # Plot
   p <- ggplot(plot_data, aes(x = True_Percentiles, y = Fit_Percentiles)) +
-    geom_point(size = 1, color = "chartreuse4") +
+    geom_point(size = 0.5, color = "chartreuse4") +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkorange3") +
     labs(
       title = "P-P plot",

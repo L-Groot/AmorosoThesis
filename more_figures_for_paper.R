@@ -2,6 +2,8 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 
+library(patchwork)
+
 #-------------------------
 # (1) Bimodal geyser data
 #-------------------------
@@ -64,7 +66,7 @@ tau <- exGauss_par$tau
 n <- length(rt_dat)
 
 # Simulate data from estimated ex-Gaussian
-set.seed(79)
+set.seed(80)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 
 # Make GIF to visualize how 5 methods fit the data as more samples become available
@@ -81,23 +83,23 @@ n_vec <- c(25, 50, 75, 100)
 final_list <- list()
 
 # Loop over each sample size
-for (n in n_vec) {
-  # Extract first n observations
-  dat <- exGauss_simdat[1:n]
-
-  # Estimate methods
-  res <- estimate_methods(dat)
-
-  # Get maxL amo
-  maxL_amo_id <- hellcdf_vs_hellpdf(dat)$maxL_amo
-
-  # Store in a list
-  final_list[[paste0("list_", n)]] <- list(
-    dat = dat,
-    res = res,
-    maxL_amo_id = maxL_amo_id
-  )
-}
+# for (n in n_vec) {
+#   # Extract first n observations
+#   dat <- exGauss_simdat[1:n]
+# 
+#   # Estimate methods
+#   res <- estimate_methods(dat)
+# 
+#   # Get maxL amo
+#   maxL_amo_id <- hellcdf_vs_hellpdf(dat)$maxL_amo
+# 
+#   # Store in a list
+#   final_list[[paste0("list_", n)]] <- list(
+#     dat = dat,
+#     res = res,
+#     maxL_amo_id = maxL_amo_id
+#   )
+# }
 
 
 ##########
@@ -158,10 +160,11 @@ fit_amo <- fit_rdens_amo[[2]]
 
 # Q-Q plots
 qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
-                           generatingexgauss = c(mu,sigma,tau))
+                           generatingexgauss = c(mu,sigma,tau),
+                           rev = F)
 qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
                          generatingexgauss = c(mu,sigma,tau),
-                         rev = TRUE)
+                         rev = F)
 
 # P-P plots
 pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
@@ -201,10 +204,11 @@ fit_amo <- fit_rdens_amo[[2]]
 
 # Q-Q plots
 qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
-                           generatingexgauss = c(mu,sigma,tau))
+                           generatingexgauss = c(mu,sigma,tau),
+                           rev = F)
 qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
                          generatingexgauss = c(mu,sigma,tau),
-                         rev = TRUE)
+                         rev = F)
 
 # P-P plots
 pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
@@ -243,10 +247,11 @@ fit_amo <- fit_rdens_amo[[2]]
 
 # Q-Q plots
 qq_rdens <- theoretical_qq(dat, res, method_id = "rdens",
-                           generatingexgauss = c(mu,sigma,tau))
+                           generatingexgauss = c(mu,sigma,tau),
+                           rev = F)
 qq_amo <- theoretical_qq(dat, res, method_id = maxL_amo_id,
                          generatingexgauss = c(mu,sigma,tau),
-                         rev = TRUE)
+                         rev = F)
 
 # P-P plots
 pp_rdens <- theoretical_pp(dat, res, method_id = "rdens",
@@ -267,8 +272,6 @@ final_plot_100 <- (fit_rdens + (qq_rdens / pp_rdens) +
 
 # Display final plot
 final_plot_100
-
-
 
 
 #--------------------------------
