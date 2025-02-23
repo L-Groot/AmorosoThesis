@@ -9,6 +9,13 @@ mixed_normal_pdf <- function(x, propvec, meanvec, varvec) {
 }
 
 #-------------------------------------------------------------------------------
+# Mixed normal CDF
+dmixnorm <- function(x, p, mu1, sd1, mu2, sd2) {
+  p * dnorm(x, mean = mu1, sd = sd1) + (1 - p) * dnorm(x, mean = mu2, sd = sd2)
+}
+# -> p is the proportion (weight) of first component 
+
+#-------------------------------------------------------------------------------
 # Function that predicts new data from a densityMclust() mixed normal model
 
 predict_mnorm <- function(x, mod, plot=TRUE, breaks=20) {

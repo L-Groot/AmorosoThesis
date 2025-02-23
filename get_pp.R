@@ -1,8 +1,7 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
 
-library(caret)
-
+#-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 get_pp <- function(
     dat, method = "k-fold", k = 5, prop_train = 0.8,
@@ -10,14 +9,21 @@ get_pp <- function(
   {
   
   #-----------------------------------------------------------------------------
-  set.seed(134)
-  dat <- rnorm(100)
-  method = "k-fold"
-  k = 5
-  prop_train = 0.8
-  generating_amoroso = NULL
-  generating_normal = c(0,1)
-  seed = 125
+  # Parameters :
+  # generating Normal: c(mean, sd)
+  # generating Amoroso: c(a l, c, mu)
+  # generating bimodal mixed Normal: c(mean1, mean2, sd1, sd2, weight1, weight2)
+  # generating ex-Gaussian: nc(mu, sigma, tau)
+  
+  #-----------------------------------------------------------------------------
+  # set.seed(134)
+  # dat <- rnorm(100)
+  # method = "k-fold"
+  # k = 5
+  # prop_train = 0.8
+  # generating_amoroso = NULL
+  # generating_normal = c(0,1)
+  # seed = 125
   
   #-----------------------------------------------------------------------------
   validate_inputs <- function() {
@@ -45,15 +51,28 @@ get_pp <- function(
   }
   
   #-----------------------------------------------------------------------------
-  calculate_true_likelihood <- function(test, parameters, distribution) {
+  calculate_true_likelihood <- function(test, genpar, distribution) {
+    
     if (distribution == "amoroso") {
       pred <- dgg4(test, genpar[1], genpar[2], genpar[3], genpar[4])
+      
     } else if (distribution == "normal") {
       pred <- dnorm(test, genpar[1], genpar[2])
+      
+    } else if (distribution == "exgaussian") {
+      pred <- dexGAUS(test, mu = genpar[1], sigma = genpar[2], tau = genpar[3])
+      
+    } else if (distribution == "mixednormal_bimodal") {
+      pred1 <- dnorm(test, mean = genpar[1], sd = genpar[2]) * genpar[5]
+      pred2 <- dnorm(test, mean = genpar[3], sd = genpar[4]) * genpar[6]
+      pred <- pred1 + pred2
+      
     } else {
       return(list(logL = NA, medL = NA))
     }
-    list(logL = sum(log(pred)), medL = median(pred))
+    
+    # Return true log likelihoods and median likelihoods
+    return(list(logL = sum(log(pred)), medL = median(pred)))
   }
   
   #-----------------------------------------------------------------------------
@@ -360,6 +379,8 @@ get_pp <- function(
     res <- run_splithalf(dat, prop_train, genpar, gendist)
   } else if (method == "loocv") {
     res <- run_loocv(dat, genpar, gendist)
+    #max_logL_method <-
+    #min_mse_method <-
   } else {
     stop("Invalid method. Use 'k-fold','split-half' or 'loocv'.")
   }
@@ -368,10 +389,14 @@ get_pp <- function(
   
 }
 
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-#set.seed(80)
-#dat <- rnorm(40)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+set.seed(70)
+dat <- rnorm(30)
 # dat <- rgg4(20, a=4,l=1,c=7,mu=0)
 # 
 # 
@@ -381,7 +406,7 @@ get_pp <- function(
 # 
 # res <- get_pp(dat, method = "loocv")
 # res <- get_pp(dat, method = "loocv", generating_amoroso = c(4,1,7,0))
-# res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
+res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
 # 
 # res <- get_pp(dat, method = "split-half", prop_train = 0.5)
 #res <- get_pp(dat, method = "split-half", prop_train = 0.5,

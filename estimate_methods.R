@@ -18,6 +18,7 @@ require(mclust)
 require(LaplacesDemon)
 
 # Other packages
+require(caret)
 require(ggplot2)
 require(tidyverse)
 require(tidyr)
