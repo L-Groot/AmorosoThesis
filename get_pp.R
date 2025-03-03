@@ -15,7 +15,7 @@ get_pp <- function(
   # generating Normal: c(mean, sd)
   # generating Amoroso: c(a l, c, mu)
   # generating bimodal mixed Normal: c(mean1, mean2, sd1, sd2, weight1, weight2)
-  # generating ex-Gaussian: nc(mu, sigma, tau)
+  # generating ex-Gaussian: nc(mu, sigma, nu)
   
   #-----------------------------------------------------------------------------
   # set.seed(134)
@@ -48,7 +48,7 @@ get_pp <- function(
       stop("Normal parameters must be 2 numeric values (mean, sd).")
     }
     if (!is.null(generating_exgauss) && !(length(generating_exgauss) == 3)) {
-      stop("Ex-Gaussian parameters must be 3 numeric values (mu, sigma, tau).")
+      stop("Ex-Gaussian parameters must be 3 numeric values (mu, sigma, nu).")
     }
     if (!is.null(generating_mnorm_2comp) && !(length(generating_mnorm_2comp) == 5)) {
       stop("Mixed Normal parameters must be 5 numeric values (comp1_prop, mu_comp1, sd_comp1, mu_comp2, sd_comp2).")
@@ -86,7 +86,7 @@ get_pp <- function(
       pred <- dnorm(test, genpar[1], genpar[2])
       
     } else if (distribution == "exgaussian") {
-      pred <- dexGAUS(test, mu = genpar[1], sigma = genpar[2], tau = genpar[3])
+      pred <- dexGAUS(test, mu = genpar[1], sigma = genpar[2], nu = genpar[3])
       
     } else if (distribution == "mnorm_2comp") {
       pred1 <- dnorm(test, mean = genpar[2], sd = genpar[3]) * genpar[1]
