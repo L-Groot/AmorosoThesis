@@ -6,6 +6,8 @@
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_amoroso.R"))
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/estimate_amoroso_hell_aplus.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/mnorm_functions.R"))
 
 # -> for Amoroso density function
@@ -57,7 +59,7 @@ clean_data <- function(dat) {
 }
 
 # Function to estimate Amoroso distribution
-fit_amoroso <- function(dat, amoinaplus = FALSE) {
+fit_amoroso_all <- function(dat, amoinaplus = FALSE) {
   amo <- safe_execute(quote(estimate_amoroso(dat, plot = 0, criterion = "ML")), "amo", dat)
   
   if (length(amo)==1) return(NULL)  # Return NULL if estimation failed
@@ -68,6 +70,18 @@ fit_amoroso <- function(dat, amoinaplus = FALSE) {
   } else {
     amo$max_L_models  # Best likelihood model (a+ or a-)
   }
+  
+  return(list(amo = amo, amo_x = amo_x))
+}
+
+# Function to only estimate Hellinger Amorosos in a>0
+fit_amoroso_hell_aplus <- function(dat) {
+  amo <- safe_execute(quote(estimate_amoroso_hell_aplus(dat, plot = 0, criterion = "ML")), "amo", dat)
+  
+  if (length(amo)==1) return(NULL)  # Return NULL if estimation failed
+  
+  amo_x <- amo$x
+  amo <- amo$max_L_models
   
   return(list(amo = amo, amo_x = amo_x))
 }
@@ -141,12 +155,12 @@ define_plot_limits <- function(dat, modlist_valid, breaks = 20) {
 # estimate_methods() function
 #-------------------------------------------------------------------------------
 
-estimate_methods <- function(dat, amoinaplus = FALSE) {
+estimate_methods <- function(dat) {
   dat <- clean_data(dat)  # Remove NAs
   n <- length(dat)  # Get sample size
   
   # Estimate Amoroso
-  amo <- fit_amoroso(dat, amoinaplus)
+  amo <- fit_amoroso_hell_aplus(dat)
   
   # Extract Hellinger models if Amoroso fit succeeded
   amo_hell_cdf <- extract_amoroso(amo, "HELL-CDF")

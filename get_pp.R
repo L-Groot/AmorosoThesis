@@ -115,7 +115,7 @@ get_pp <- function(
   #----------------------------------------------------------------------------
   fit_and_predict <- function(train, test, np_methods) {
     
-    res <- estimate_methods(train, amoinaplus = TRUE)
+    res <- estimate_methods(train)
     res_interp <- res$modlist_valid_interp
     
     pred_list <- list(
