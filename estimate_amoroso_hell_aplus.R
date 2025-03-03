@@ -664,7 +664,3 @@ estimate_amoroso_hell_aplus <- function(vec = NULL,
 # dat <- palmerpenguins::penguins$flipper_length_mm
 # estimate_amoroso(dat, plot = 2, criterion = "ML")
 
-
-dat <- rnorm(30)
-res <- estimate_amoroso_hell_aplus(dat)
-
