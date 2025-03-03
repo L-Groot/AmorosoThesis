@@ -8,6 +8,9 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
 
+# Set working directory to source file location
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 # Helper function that plots one density
 plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yticks = NULL, ylim = NULL) {
   
@@ -355,6 +358,7 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
 
 
 
+
 ################################################################################
 ### Simulations: Normal
 ################################################################################
@@ -480,3 +484,6 @@ for (parsetnr in 1:length(pars_list)) {
     
   }
 }
+
+# Save list!
+saveRDS(res_normal, file = "res_normal.rds")

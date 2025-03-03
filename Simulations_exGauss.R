@@ -78,7 +78,6 @@ for (parsetnr in 1:length(pars_list)) {
                           amo_hell_pdf = numeric(nrep))
     # -> NA in logL measure logbook
     na_logL <- data.frame(i = 1:nrep,
-                          rdens = numeric(nrep),
                           scKDE_2infplus = numeric(nrep),
                           mnorm = numeric(nrep),
                           amo_hell_cdf = numeric(nrep),

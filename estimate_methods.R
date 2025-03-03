@@ -197,7 +197,7 @@ plot_methods <- function(dat, res,
                          plot_common_x = TRUE,
                          generatingnormal = NULL, #supply (mean,sd)
                          generatingamoroso = NULL, #supply (a,l,c,mu)
-                         generatingexgauss = NULL, #supply (mu,sigma,tau)
+                         generatingexgauss = NULL, #supply (mu,sigma,nu)
                          xticks = NULL,
                          yticks = NULL,
                          ymax = NULL,
@@ -411,7 +411,7 @@ plot_rdens_amo <- function(dat, res,
                          plot_common_x = TRUE,
                          generatingnormal = NULL, #supply (mean,sd)
                          generatingamoroso = NULL, #supply (a,l,c,mu)
-                         generatingexgauss = NULL, #supply (mu,sigma,tau)
+                         generatingexgauss = NULL, #supply (mu,sigma,nu)
                          xticks = NULL,
                          yticks = NULL,
                          ymax = NULL,
@@ -593,7 +593,7 @@ theoretical_qq <- function(dat, res, method_id = "rdens",
   # method_id = "amo_hell_pdf"
   # generatingnormal = NULL
   # generatingamoroso = NULL
-  # generatingexgauss = c(mu,sigma,tau)
+  # generatingexgauss = c(mu,sigma,nu)
   # lower_tail = TRUE
   # par_on_axislab = FALSE
   # rev = F
@@ -726,7 +726,7 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
   # method_id = "amo_hell_pdf"
   # generatingnormal = NULL
   # generatingamoroso = NULL
-  # generatingexgauss = c(mu,sigma,tau)
+  # generatingexgauss = c(mu,sigma,nu)
   # lower_tail = TRUE
   # par_on_axislab = FALSE
   
