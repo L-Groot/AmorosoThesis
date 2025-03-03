@@ -245,7 +245,6 @@ par_exgauss1 <- c(1, 0.1, 2)
 par_exgauss2 <- c(1, 0.5, 2)
 par_exgauss3 <- c(1, 0.9, 3)
 
-
 # Generate x values for the plot
 x_vals <- seq(0, 9, length.out = 1000)
 
@@ -294,9 +293,9 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3
 #-------------------
 
 # Define parameters for three ex-Gauss distributions
-par_mnorm1 <- c(0.6,3,1.2,7,1)
-par_mnorm2 <- c(0.5,3.7,0.7,6,0.8)
-par_mnorm3 <- c(0.8,3.5,1.5,7,1)
+par_mnorm1 <- c(0.6, 3, 1.2, 7, 1)
+par_mnorm2 <- c(0.5, 3.7, 0.7, 6, 0.8)
+par_mnorm3 <- c(0.8, 3.5, 1.5, 7, 1)
 
 # Generate x values for the plot
 x_vals <- seq(0, 9, length.out = 1000)
@@ -353,3 +352,131 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm2,
 plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
                line_color = "darkorange3", main = lab3, yticks = yticks)
 
+
+
+
+################################################################################
+### Simulations: Normal
+################################################################################
+# Define parameters for the normal distributions
+par_norm_wide <- c(100, 15)
+par_norm_medium <- c(100, 10)
+par_norm_narrow <- c(100, 5)
+
+# Put parameters in list
+pars_list <- list(par_norm_wide, par_norm_medium, par_norm_narrow)
+
+# Set nr of repetitions (per parameter set and sample size
+#nrep <- 2
+nrep <- 100
+
+# Vector of sample sizes
+#nvec <- c(25,50)
+nvec <- c(25,50,100,200)
+
+# Make seeds
+seedvec <- seq(1,nrep)
+
+# Initialize list for normal results
+res_normal <- list(
+  pars1 = list(
+    pars = c(),
+    n25 = list(),
+    n50 = list(),
+    n100 = list(),
+    n200 = list()
+  ),
+  pars2 = list(
+    pars = c(),
+    n25 = list(),
+    n50 = list(),
+    n100 = list(),
+    n200 = list()
+  ),
+  pars3 = list(
+    pars = c(),
+    n25 = list(),
+    n50 = list(),
+    n100 = list(),
+    n200 = list()
+  )
+)
+
+# Loop through parameter sets
+for (parsetnr in 1:length(pars_list)) {
+  
+  # Get parameters
+  pars <- pars_list[[parsetnr]]
+  
+  # Store parameters in results
+  res_normal[[parsetnr]]$pars <- pars
+  
+  # Loop through sample sizes
+  for (n_ix in 1:length(nvec)) {
+    
+    # Get current sample size
+    n <- nvec[n_ix]
+    
+    # Initialize dataframes for results
+    # -> Winning models
+    win_df <- data.frame(i = 1:nrep,
+                         max_logL_method = character(nrep),
+                         min_MSE_method = character(nrep))
+    # -> NA in medL measure logbook
+    na_medL <- data.frame(i = 1:nrep,
+                          rdens = numeric(nrep),
+                          scKDE_2infplus = numeric(nrep),
+                          mnorm = numeric(nrep),
+                          amo_hell_cdf = numeric(nrep),
+                          amo_hell_pdf = numeric(nrep))
+    # -> NA in logL measure logbook
+    na_logL <- data.frame(i = 1:nrep,
+                          rdens = numeric(nrep),
+                          scKDE_2infplus = numeric(nrep),
+                          mnorm = numeric(nrep),
+                          amo_hell_cdf = numeric(nrep),
+                          amo_hell_pdf = numeric(nrep))
+    
+
+    # Loop through iterations (100 iterations per sample size and parameter set)
+    for (i in 1:nrep) {
+      
+      # Print info of current iteration
+      cat("mean = ", pars[1], "sd = ", pars[2], " | ", "n = ", n, " | ",
+          "i = ", i, "\n")
+      
+      # Simulate data
+      set.seed(seedvec[i])
+      dat <- rnorm(n, mean = pars[1], sd = pars[2])
+      
+      # Estimate methods and get PP measures
+      res <- get_pp(dat, method = "loocv", generating_normal = c(pars[1], pars[2]))
+      
+      # Identify max-L and min-MSE method
+      max_logl_meth <- rownames(res)[which.max(ifelse(is.na(res$logL_avg), -Inf, res$logL_avg))]
+      min_mse_meth <- rownames(res)[which.min(ifelse(is.na(res$mse_avg), Inf, res$mse_avg))]
+      
+      # Store them in results dataframe
+      win_df$max_logL_method[i] <- max_logl_meth
+      win_df$min_MSE_method[i] <- min_mse_meth
+      
+      # Check if any method has NA for likelihood measures
+      methods <- rownames(res)
+      na_logL_flags <- as.numeric(is.na(res$logL_avg)) # TRUE if NA, FALSE otherwise
+      na_medL_flags <- as.numeric(is.na(res$medL_avg))
+      
+      # Store the NA flags in results dataframe
+      method_match <- intersect(methods, colnames(na_logL))
+      na_logL[i, method_match] <- na_logL_flags
+      na_medL[i, method_match] <- na_medL_flags
+    }
+    
+    # Add the results dataframes of this n to the results list
+    res_normal[[parsetnr]][[n_ix+1]] <- list(
+      win_df = win_df,
+      na_logL = na_logL,
+      na_medL = na_medL
+    )
+    
+  }
+}

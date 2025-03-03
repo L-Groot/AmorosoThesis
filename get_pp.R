@@ -5,7 +5,9 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 #-------------------------------------------------------------------------------
 get_pp <- function(
     dat, method = "k-fold", k = 5, prop_train = 0.8,
-    generating_amoroso = NULL, generating_normal = NULL, seed = 125)
+    generating_amoroso = NULL, generating_normal = NULL, 
+    generating_exgauss = NULL, generating_mnorm_2comp = NULL,
+    seed = 125)
   {
   
   #-----------------------------------------------------------------------------
@@ -27,26 +29,50 @@ get_pp <- function(
   
   #-----------------------------------------------------------------------------
   validate_inputs <- function() {
-    if (!is.null(generating_amoroso) && !is.null(generating_normal)) {
-      stop("Specify EITHER Amoroso OR Normal as the generating distribution.")
+    # Count the number of non-null generating distributions
+    num_generating_dists <- sum(!is.null(c(
+      generating_amoroso, generating_normal, 
+      generating_exgauss, generating_mnorm_2comp
+    )))
+    
+    # Ensure exactly one generating distribution is specified
+    if (num_generating_dists != 1) {
+      stop("Specify exactly ONE generating distribution.")
     }
+    
+    # Check if correct number of parameters are supplied
     if (!is.null(generating_amoroso) && !(length(generating_amoroso) == 4)) {
       stop("Amoroso parameters must be 4 numeric values (a, l, c, mu).")
     }
     if (!is.null(generating_normal) && !(length(generating_normal) == 2)) {
       stop("Normal parameters must be 2 numeric values (mean, sd).")
     }
+    if (!is.null(generating_exgauss) && !(length(generating_exgauss) == 3)) {
+      stop("Ex-Gaussian parameters must be 3 numeric values (mu, sigma, tau).")
+    }
+    if (!is.null(generating_mnorm_2comp) && !(length(generating_mnorm_2comp) == 5)) {
+      stop("Mixed Normal parameters must be 5 numeric values (comp1_prop, mu_comp1, sd_comp1, mu_comp2, sd_comp2).")
+    }
+    
+    # Assign parameters
     if (length(generating_amoroso)==4) {
       genpar <- generating_amoroso
       gendist <- "amoroso"
-    }
-    else if (length(generating_normal)==2) {
+    } else if (length(generating_normal)==2) {
       genpar <- generating_normal
       gendist <- "normal"
+    } else if (length(generating_exgauss)==3) {
+      genpar <- generating_exgauss
+      gendist <- "exgaussian"
+    } else if (length(generating_mnorm_2comp)==5) {
+      genpar <- generating_mnorm_2comp
+      gendist <- "mnorm_2comp"
     } else {
       genpar <- NULL
       gendist <- NULL
     }
+    
+    # Return generating distribution type and parameters
     return(list(genpar = genpar, gendist = gendist))
   }
   
@@ -62,9 +88,9 @@ get_pp <- function(
     } else if (distribution == "exgaussian") {
       pred <- dexGAUS(test, mu = genpar[1], sigma = genpar[2], tau = genpar[3])
       
-    } else if (distribution == "mixednormal_bimodal") {
-      pred1 <- dnorm(test, mean = genpar[1], sd = genpar[2]) * genpar[5]
-      pred2 <- dnorm(test, mean = genpar[3], sd = genpar[4]) * genpar[6]
+    } else if (distribution == "mnorm_2comp") {
+      pred1 <- dnorm(test, mean = genpar[2], sd = genpar[3]) * genpar[1]
+      pred2 <- dnorm(test, mean = genpar[4], sd = genpar[5]) * (1-genpar[1])
       pred <- pred1 + pred2
       
     } else {
@@ -395,8 +421,8 @@ get_pp <- function(
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-set.seed(70)
-dat <- rnorm(30)
+#set.seed(70)
+#dat <- rnorm(30)
 # dat <- rgg4(20, a=4,l=1,c=7,mu=0)
 # 
 # 
@@ -406,7 +432,7 @@ dat <- rnorm(30)
 # 
 # res <- get_pp(dat, method = "loocv")
 # res <- get_pp(dat, method = "loocv", generating_amoroso = c(4,1,7,0))
-res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
+#res <- get_pp(dat, method = "loocv", generating_normal = c(0,1))
 # 
 # res <- get_pp(dat, method = "split-half", prop_train = 0.5)
 #res <- get_pp(dat, method = "split-half", prop_train = 0.5,
