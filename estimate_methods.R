@@ -380,7 +380,7 @@ plot_methods <- function(dat, res,
 hellcdf_vs_hellpdf <- function(dat) {
   
   # Get maxL Amorosos (for each method either +ve or_ve parameter space)
-  amo_maxL_df <- estimate_amoroso(dat)$max_L_models
+  amo_maxL_df <- estimate_amoroso_hell_aplus(dat)$max_L_models
   
   # Identify whether Amoroso Hell-CDF or Hell-PDF has higher likelihood
   hell_pdf_row <- which(amo_maxL_df$method_ID == "HELL-PDF")

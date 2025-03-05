@@ -1,10 +1,9 @@
 ################################################################################
-### Simulations: Data-generating ex-Gaussian
+### Simulations: Data-generating Normal
 ################################################################################
 
 # Set working directory to source file location
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-
 
 # Load functions from Github
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
@@ -12,66 +11,67 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
 
-# Specify the 3 exGaussian parameter sets
-par_exgauss1 <- c(1, 0.1, 2)
-par_exgauss2 <- c(1, 0.5, 2)
-par_exgauss3 <- c(1, 0.9, 3)
+# Load list (since first distribution set is ready)
+res_normal <- readRDS("res_normal.rds")
 
-# Put parameter sets in a list
-pars_list <- list(par_exgauss1, par_exgauss2, par_exgauss3)
+# Define parameters for the normal distributions
+par_norm_wide <- c(100, 15)
+par_norm_medium <- c(100, 10)
+par_norm_narrow <- c(100, 5)
+
+# Put parameters in list
+pars_list <- list(par_norm_wide, par_norm_medium, par_norm_narrow)
+
+# Set nr of repetitions (per parameter set and sample size
+#nrep <- 2
+nrep <- 100
 
 # Vector of sample sizes
 #nvec <- c(25,50)
-nvec <- c(25,50,100)
+nvec <- c(25,50,100,200)
 
-# Nr of iterations per sample size and distribution
-#nrep <- 3
-nrep <- 100
-
-# Make vector of seeds
+# Make seeds
 seedvec <- seq(1,nrep)
 
-# Initialize empty list for results
-res_exgauss <- list(
-  pars1 = list(
-    pars = c(),
-    n25 = list(),
-    n50 = list(),
-    n100 = list()
-  ),
-  pars2 = list(
-    pars = c(),
-    n25 = list(),
-    n50 = list(),
-    n100 = list()
-  ),
-  pars3 = list(
-    pars = c(),
-    n25 = list(),
-    n50 = list(),
-    n100 = list()
-  )
-)
+# Initialize list for normal results
+# res_normal <- list(
+#   pars1 = list(
+#     pars = c(),
+#     n25 = list(),
+#     n50 = list(),
+#     n100 = list(),
+#     n200 = list()
+#   ),
+#   pars2 = list(
+#     pars = c(),
+#     n25 = list(),
+#     n50 = list(),
+#     n100 = list(),
+#     n200 = list()
+#   ),
+#   pars3 = list(
+#     pars = c(),
+#     n25 = list(),
+#     n50 = list(),
+#     n100 = list(),
+#     n200 = list()
+#   )
+# )
 
-#-------------------------------------------------------------------------------
 # Loop through parameter sets
-for (parsetnr in 1:length(pars_list)) {
+for (parsetnr in 2:length(pars_list)) {
   
   # Get parameters
   pars <- pars_list[[parsetnr]]
   
-  # pars<-pars_list[[1]]
-  
   # Store parameters in results
-  res_exgauss[[parsetnr]]$pars <- pars
+  res_normal[[parsetnr]]$pars <- pars
   
   # Loop through sample sizes
   for (n_ix in 1:length(nvec)) {
     
     # Get current sample size
     n <- nvec[n_ix]
-    
-    # n <- 50
     
     # Initialize dataframes for results
     # -> Winning models
@@ -87,6 +87,7 @@ for (parsetnr in 1:length(pars_list)) {
                           amo_hell_pdf = numeric(nrep))
     # -> NA in logL measure logbook
     na_logL <- data.frame(i = 1:nrep,
+                          rdens = numeric(nrep),
                           scKDE_2infplus = numeric(nrep),
                           mnorm = numeric(nrep),
                           amo_hell_cdf = numeric(nrep),
@@ -96,19 +97,16 @@ for (parsetnr in 1:length(pars_list)) {
     # Loop through iterations (100 iterations per sample size and parameter set)
     for (i in 1:nrep) {
       
-      i <- 29
-      
       # Print info of current iteration
-      cat("mu = ", pars[1], ", sigma = ", pars[2], ", nu = ", pars[3], " | ",
-          "n = ", n, " | ", "i = ", i, "\n")
+      cat("mean = ", pars[1], "sd = ", pars[2], " | ", "n = ", n, " | ",
+          "i = ", i, "\n")
       
       # Simulate data
       set.seed(seedvec[i])
-      dat <- rexGAUS(n, mu = pars[1], sigma = pars[2], nu = pars[3])
+      dat <- rnorm(n, mean = pars[1], sd = pars[2])
       
       # Estimate methods and get PP measures
-      res <- get_pp(dat, method = "loocv",
-                    generating_exgauss = c(pars[1], pars[2], pars[3]))
+      res <- get_pp(dat, method = "loocv", generating_normal = c(pars[1], pars[2]))
       
       # Identify max-L and min-MSE method
       max_logl_meth <- rownames(res)[which.max(ifelse(is.na(res$logL_avg), -Inf, res$logL_avg))]
@@ -130,7 +128,7 @@ for (parsetnr in 1:length(pars_list)) {
     }
     
     # Add the results dataframes of this n to the results list
-    res_exgauss[[parsetnr]][[n_ix+1]] <- list(
+    res_normal[[parsetnr]][[n_ix+1]] <- list(
       win_df = win_df,
       na_logL = na_logL,
       na_medL = na_medL
@@ -138,11 +136,9 @@ for (parsetnr in 1:length(pars_list)) {
     
   }
 }
+
+
 #-------------------------------------------------------------------------------
-# When simulations are done, save the list!
-saveRDS(res_exgauss, file = "res_exgauss.rds")
-
-
-
-
-saveRDS(res_exgauss, file = "res_exgauss.rds")
+# Save list!
+saveRDS(res_normal, file = "res_normal.rds")
+saveRDS(res_normal, file = "res_normal.rds")
