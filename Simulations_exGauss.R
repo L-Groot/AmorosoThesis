@@ -22,7 +22,7 @@ pars_list <- list(par_exgauss1, par_exgauss2, par_exgauss3)
 
 # Vector of sample sizes
 #nvec <- c(25,50)
-nvec <- c(25,50,100)
+nvec <- c(25,50,100,200)
 
 # Nr of iterations per sample size and distribution
 #nrep <- 3

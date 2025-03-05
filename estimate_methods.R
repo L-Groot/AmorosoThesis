@@ -27,7 +27,8 @@ require(tidyr)
 require(gridExtra)
 require(gamlss.dist)
 require(tidymodels)
-library(spatstat)
+require(spatstat)
+require(R.utils)
 
 
 #-------------------------------------------------------------------------------
@@ -35,16 +36,40 @@ library(spatstat)
 #-------------------------------------------------------------------------------
 
 # Function to safely execute expressions and handle errors
+# safe_execute <- function(expr, object_name, data_vector) {
+#   tryCatch(
+#     eval(bquote(.(expr)), envir = list(dat = data_vector)),
+#     error = function(e) {
+#       cat(sprintf("Error with fitting %s: %s; Other methods were still fit.\n",
+#                   object_name, e$message))
+#       return(NA)  # Assigns NA if method fails
+#     }
+#   )
+# }
+
+
 safe_execute <- function(expr, object_name, data_vector) {
+  env <- new.env()  # Create a new environment
+  env$dat <- data_vector  # Assign data_vector to 'dat' in the environment
+  
   tryCatch(
-    eval(bquote(.(expr)), envir = list(dat = data_vector)),
+    withTimeout(
+      eval(bquote(.(expr)), envir = env),  # Use the proper environment
+      timeout = 15
+    ),
     error = function(e) {
       cat(sprintf("Error with fitting %s: %s; Other methods were still fit.\n",
                   object_name, e$message))
       return(NA)  # Assigns NA if method fails
+    },
+    TimeoutException = function(e) {
+      cat(sprintf("Timeout error with fitting %s: Execution took longer than 2 minutes; Other methods were still fit.\n",
+                  object_name))
+      return(NA)  # Assigns NA if execution times out
     }
   )
 }
+
 
 # Function to remove NAs and print a warning if necessary
 clean_data <- function(dat) {
