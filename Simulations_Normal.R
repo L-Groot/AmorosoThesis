@@ -141,4 +141,3 @@ for (parsetnr in 2:length(pars_list)) {
 #-------------------------------------------------------------------------------
 # Save list!
 saveRDS(res_normal, file = "res_normal.rds")
-saveRDS(res_normal, file = "res_normal.rds")

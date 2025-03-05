@@ -60,7 +60,7 @@ for (parsetnr in 1:length(pars_list)) {
   # Get parameters
   pars <- pars_list[[parsetnr]]
   
-  # pars<-pars_list[[1]]
+  #pars<-pars_list[[1]]
   
   # Store parameters in results
   res_exgauss[[parsetnr]]$pars <- pars
@@ -71,7 +71,7 @@ for (parsetnr in 1:length(pars_list)) {
     # Get current sample size
     n <- nvec[n_ix]
     
-    # n <- 50
+    #n <- 50
     
     # Initialize dataframes for results
     # -> Winning models
@@ -140,9 +140,4 @@ for (parsetnr in 1:length(pars_list)) {
 }
 #-------------------------------------------------------------------------------
 # When simulations are done, save the list!
-saveRDS(res_exgauss, file = "res_exgauss.rds")
-
-
-
-
 saveRDS(res_exgauss, file = "res_exgauss.rds")

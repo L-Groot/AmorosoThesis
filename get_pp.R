@@ -20,11 +20,13 @@ get_pp <- function(
   #-----------------------------------------------------------------------------
   # set.seed(134)
   # dat <- rnorm(100)
-  # method = "k-fold"
+  method = "loocv"
   # k = 5
   # prop_train = 0.8
-  # generating_amoroso = NULL
-  # generating_normal = c(0,1)
+  generating_amoroso = NULL
+  generating_normal = NULL
+  generating_exgauss <- c(pars[1],pars[2],pars[3])
+  generating_mnorm_2comp <- NULL
   # seed = 125
   
   #-----------------------------------------------------------------------------
