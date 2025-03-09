@@ -6,7 +6,7 @@
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # Read in the list of results with what he have already
-res_normal <- readRDS("res_normal.rds")
+res_normal <- readRDS("res_normal_vipasha.rds")
 
 # Load functions from Github
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
@@ -62,8 +62,6 @@ seedvec <- seq(1,nrep)
 # Loop through parameter sets
 for (parsetnr in 1:length(pars_list)) {
   
-  parsetnr <- 1
-  
   # Get parameters
   pars <- pars_list[[parsetnr]]
   
@@ -72,8 +70,6 @@ for (parsetnr in 1:length(pars_list)) {
   
   # Loop through sample sizes
   for (n_ix in 1:length(nvec)) {
-    
-    n_ix <- 4
     
     # Get current sample size
     n <- nvec[n_ix]

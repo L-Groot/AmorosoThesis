@@ -207,7 +207,6 @@ estimate_methods <- function(dat) {
 #-------------------------------------------------------------------------------
 # plot_methods() function
 #-------------------------------------------------------------------------------
-
 plot_methods <- function(dat, res,
                          plot_common_x = TRUE,
                          generatingnormal = NULL, #supply (mean,sd)
@@ -218,56 +217,37 @@ plot_methods <- function(dat, res,
                          ymax = NULL,
                          xmin = NULL,
                          xmax = NULL,
-                         bins = 30) {
-
-  # Get valid models
+                         bins = 30,
+                         method_to_plot = NULL,
+                         alpha = 1,
+                         main = NULL) {  # New argument 'main'
+  
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid
   modlist_valid_interp <- res$modlist_valid_interp
   
-  # Choose whether to interpolate x-range across models
   modlist_plot <- if (plot_common_x) modlist_valid_interp else modlist_valid
   
-  # Determine plot bounds
-  ifelse(is.null(ymax),
-         ymax <- res$ymax,
-         ymax <- ymax)
-  ifelse(is.null(xmin),
-         xmin_plot <- res$xmin_plot,
-         xmin_plot <- xmin)
-  ifelse(is.null(xmax),
-         xmax_plot <- res$xmax_plot,
-         xmax_plot <- xmax)
+  ifelse(is.null(ymax), ymax <- res$ymax, ymax <- ymax)
+  ifelse(is.null(xmin), xmin_plot <- res$xmin_plot, xmin_plot <- xmin)
+  ifelse(is.null(xmax), xmax_plot <- res$xmax_plot, xmax_plot <- xmax)
   
   cat("ymax: ", ymax, "\n")
   cat("xmin_plot: ", xmin_plot, "\n")
   cat("xmax_plot: ", xmax_plot, "\n")
   
-  # Get titles and colors (from your function)
   all_titles <- list(
     rdens = "R density()",
     scKDE_2infplus = "Adj. KDE (2Inf+)",
     mnorm = "Mixed Normal",
-    amo_hell_cdf = if (length(modlist_all$amo_hell_cdf) > 1) {
-      sign <- ifelse(modlist_all$amo_hell_cdf$method_short == "HELL-CDF (+)", "+", "-")
-      paste0("Amoroso (Hell-CDF", sign, ")")
-    } else "",
-    amo_hell_pdf = if (length(modlist_all$amo_hell_pdf) > 1) {
-      sign <- ifelse(modlist_all$amo_hell_pdf$method_short == "HELL-CDF (+)", "+", "-")
-      paste0("Amoroso (Hell-PDF", sign, ")")
-    } else ""
+    amo_hell_cdf = "Amoroso (Hell-CDF)",
+    amo_hell_pdf = "Amoroso (Hell-PDF)"
   )
   
-  # Extract valid model titles
   valid_titles <- all_titles[intersect(names(all_titles), names(modlist_valid))]
-  
-  # Convert to vector
   titlevec <- unlist(valid_titles)
-  
-  # Create vector of colours
   colors <- c("royalblue", "springgreen4", "orange3","hotpink3","purple3")
   
-  # Convert modlist_plot into a tidy dataframe for ggplot
   df_list <- lapply(names(modlist_plot), function(name) {
     data.frame(
       x = modlist_plot[[name]]$x,
@@ -277,71 +257,49 @@ plot_methods <- function(dat, res,
   })
   
   df_plot <- bind_rows(df_list)
-  
-  # Assign colors based on method names
   df_plot$color <- colors[match(df_plot$method, names(valid_titles))]
   
-  # Create histogram data
   hist_data <- data.frame(x = dat)
   
-  # Generate plots
-  # Create a list to store the plots
-  plot_list <- list()
-  
-  # Loop over each method in valid_titles
-  for (meth in names(valid_titles)) {
-    
-    # Filter the data for the current method
-    method_data <- df_plot %>% filter(method == meth)
-    
-    # Get color for current method
+  if (!is.null(method_to_plot) && method_to_plot %in% names(valid_titles)) {
+    method_data <- df_plot %>% filter(method == method_to_plot)
     color <- unique(method_data$color)
     
-    # Create the plot for the current method
     p <- ggplot() +
-      # Histogram
-      geom_histogram(data = hist_data, aes(x = x, y = ..density..), 
+      geom_histogram(data = hist_data, aes(x = x, y = ..density..),
                      bins = bins, fill = "grey90", color = "grey80", alpha = 0.5)
     
-    # Add generatingnormal line if provided
     if (!is.null(generatingnormal)) {
-      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
-                             y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100), 
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100),
                                        mean = generatingnormal[1], 
                                        sd = generatingnormal[2])), 
                          color = "grey60", linetype = "dashed", size = 1)
     }
     
-    # Add generatingamoroso line if provided
     if (!is.null(generatingamoroso)) {
-      # Assuming you have the amoroso distribution function, let's call it `dgg4()`
-      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
-                             y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100), 
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100),
                                       generatingamoroso[1], generatingamoroso[2], 
                                       generatingamoroso[3], generatingamoroso[4])), 
                          color = "grey60", linetype = "dashed", size = 1)
     }
     
-    # Add generatingexgauss line if provided
     if (!is.null(generatingexgauss)) {
-      # Assuming you have the amoroso distribution function, let's call it `dgg4()`
-      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100), 
-                             y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100), 
-                                      generatingexgauss[1], generatingexgauss[2], 
-                                      generatingexgauss[3])), 
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
+                                         generatingexgauss[1], generatingexgauss[2], 
+                                         generatingexgauss[3])), 
                          color = "grey60", linetype = "dashed", size = 0.7)
     }
     
-    # Add density estimate
-    p <- p + 
-      geom_line(data = method_data, 
-                aes(x = x, y = y), color = color, size = 0.8) +
-      
-    # Add other stuff
-      labs(title = valid_titles[[meth]], x = NULL, y = "Density") +
+    p <- p +
+      geom_line(data = method_data, aes(x = x, y = y), color = color, size = 0.8, alpha = alpha) +
+      labs(title = ifelse(is.null(main), valid_titles[[method_to_plot]], main),  # Use 'main' if provided
+           x = NULL, y = "Density") +
       theme_minimal() +
       theme(
-        text = element_text(family = "Times"),  # Use Times New Roman
+        text = element_text(family = "Times"),
         plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
         axis.title = element_text(size = 10, face = "bold"),
         axis.text = element_text(size = 10),
@@ -353,25 +311,45 @@ plot_methods <- function(dat, res,
       ) +
       coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
     
-    # Apply xticks if not NULL
     if (!is.null(xticks)) {
       p <- p + scale_x_continuous(breaks = xticks)
     }
     
-    # Apply yticks if not NULL
     if (!is.null(yticks)) {
       p <- p + scale_y_continuous(breaks = yticks)
     }
     
-    
-    
-    # Add the plot to the list
-    plot_list[[meth]] <- p
+    print(p)
+  } else {
+    plot_list <- list()
+    for (meth in names(valid_titles)) {
+      method_data <- df_plot %>% filter(method == meth)
+      color <- unique(method_data$color)
+      p <- ggplot() +
+        geom_histogram(data = hist_data, aes(x = x, y = ..density..),
+                       bins = bins, fill = "grey90", color = "grey80", alpha = 0.5) +
+        geom_line(data = method_data, aes(x = x, y = y), color = color, size = 0.8, alpha = alpha) +
+        labs(title = ifelse(is.null(main), valid_titles[[meth]], main),  # Use 'main' if provided
+             x = NULL, y = "Density") +
+        theme_minimal() +
+        theme(
+          text = element_text(family = "Times"),
+          plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
+          axis.title = element_text(size = 10, face = "bold"),
+          axis.text = element_text(size = 10),
+          plot.margin = margin(1, 1, 1, 1, "lines"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(color = "black")
+        ) +
+        coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+      plot_list[[meth]] <- p
+    }
+    grid.arrange(grobs = plot_list, ncol = 5)
   }
-  
-  # Arrange in a 1-row, 5-column grid
-  grid.arrange(grobs = plot_list, ncol = 5)
 }
+
 
 
 #-------------------------------------------------------------------------------
@@ -904,5 +882,3 @@ theoretical_pp <- function(dat, res, method_id = "rdens",
 # theoretical_qq(dat, res, method_id = "amo_hell_pdf", generatingnormal = c(0,1), lower_tail = T)
 # theoretical_qq(dat, res, method_id = "amo_hell_cdf", generatingnormal = c(0,1), lower_tail = TRUE)
 
-
-             
