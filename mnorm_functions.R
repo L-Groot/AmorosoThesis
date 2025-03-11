@@ -8,12 +8,29 @@ mixed_normal_pdf <- function(x, propvec, meanvec, varvec) {
   return(pdf_vals)
 }
 
+
 #-------------------------------------------------------------------------------
 # Mixed normal CDF (for two components)
 dmixnorm <- function(x, p, mu1, sd1, mu2, sd2) {
   p * dnorm(x, mean = mu1, sd = sd1) + (1 - p) * dnorm(x, mean = mu2, sd = sd2)
 }
 # -> p is the proportion (weight) of first component 
+
+
+#-------------------------------------------------------------------------------
+# Generate random sample (two-components)
+rmixnorm <- function(n, p1, mu1, sd1, mu2, sd2) {
+  # Generate n random uniform values to decide which component each sample comes from
+  component <- rbinom(n, size = 1, prob = p1)  # 1 = first component, 0 = second component
+  
+  # Generate data from the respective normal distributions
+  samples <- ifelse(component == 1, 
+                    rnorm(n, mean = mu1, sd = sd1), 
+                    rnorm(n, mean = mu2, sd = sd2))
+  
+  return(samples)
+}
+
 
 #-------------------------------------------------------------------------------
 # Function that predicts new data from a densityMclust() mixed normal model

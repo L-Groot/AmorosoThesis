@@ -318,7 +318,7 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3
 ### Mixed Normal ###
 #-------------------
 
-# Define parameters for three ex-Gauss distributions
+# Define parameters for three mixed Normal distributions
 par_mnorm1 <- c(0.6, 3, 1.2, 7, 1)
 par_mnorm2 <- c(0.5, 3.7, 0.7, 6, 0.8)
 par_mnorm3 <- c(0.8, 3.5, 1.5, 7, 1)

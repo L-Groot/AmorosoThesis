@@ -37,7 +37,7 @@ restart_i <- 1       # The iteration number to resume from
 
 # Load previous results if available
 if (file.exists("res_mnorm.rds")) {
-  res_amo <- readRDS("res_mnormIch ha.rds")
+  res_mnorm <- readRDS("res_mnorm.rds")
 } else {
   # Initialize empty list for results
   res_amo <- list(
