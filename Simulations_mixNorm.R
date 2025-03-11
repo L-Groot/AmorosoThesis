@@ -40,7 +40,7 @@ if (file.exists("res_mnorm.rds")) {
   res_mnorm <- readRDS("res_mnorm.rds")
 } else {
   # Initialize empty list for results
-  res_amo <- list(
+  res_mnorm <- list(
     pars1 = list(pars = c(), n25 = list(), n50 = list(), n100 = list(), n200 = list()),
     pars2 = list(pars = c(), n25 = list(), n50 = list(), n100 = list(), n200 = list()),
     pars3 = list(pars = c(), n25 = list(), n50 = list(), n100 = list(), n200 = list())
@@ -55,7 +55,7 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
   pars <- pars_list[[parsetnr]]
   
   # Store parameters in results
-  res_amo[[parsetnr]]$pars <- pars
+  res_mnorm[[parsetnr]]$pars <- pars
   
   # Loop through sample sizes, skipping completed ones
   for (n_ix in which(nvec == restart_n):length(nvec)) {
@@ -64,7 +64,7 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
     n <- nvec[n_ix]
     
     # Initialize dataframes for results if not already present
-    if (!("win_df" %in% names(res_amo[[parsetnr]][[n_ix+1]]))) {
+    if (!("win_df" %in% names(res_mnorm[[parsetnr]][[n_ix+1]]))) {
       win_df <- data.frame(i = 1:nrep,
                            max_logL_method = character(nrep),
                            min_MSE_method = character(nrep))
@@ -81,9 +81,9 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
                             amo_hell_pdf = numeric(nrep))
     } else {
       # Load existing results if they exist
-      win_df <- res_amo[[parsetnr]][[n_ix+1]]$win_df
-      na_medL <- res_amo[[parsetnr]][[n_ix+1]]$na_medL
-      na_logL <- res_amo[[parsetnr]][[n_ix+1]]$na_logL
+      win_df <- res_mnorm[[parsetnr]][[n_ix+1]]$win_df
+      na_medL <- res_mnorm[[parsetnr]][[n_ix+1]]$na_medL
+      na_logL <- res_mnorm[[parsetnr]][[n_ix+1]]$na_logL
     }
     
     # Loop through iterations, skipping completed ones
@@ -122,7 +122,7 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
       na_medL[i, method_match] <- na_medL_flags
       
       # Save intermediate results after each iteration
-      res_amo[[parsetnr]][[n_ix+1]] <- list(
+      res_mnorm[[parsetnr]][[n_ix+1]] <- list(
         win_df = win_df,
         na_logL = na_logL,
         na_medL = na_medL
