@@ -14,7 +14,7 @@ get_pp <- function(
   # Parameters :
   # generating Normal: c(mean, sd)
   # generating Amoroso: c(a l, c, mu)
-  # generating bimodal mixed Normal: c(mean1, mean2, sd1, sd2, weight1, weight2)
+  # generating bimodal mixed Normal: c(weight1, mean1, sd1, mean2, sd2)
   # generating ex-Gaussian: nc(mu, sigma, nu)
   
   #-----------------------------------------------------------------------------

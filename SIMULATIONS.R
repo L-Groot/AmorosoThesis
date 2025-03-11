@@ -12,7 +12,8 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # Helper function that plots one density
-plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yticks = NULL, ylim = NULL) {
+plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yticks = NULL, ylim = NULL,
+                           lwd = 0.8) {
   
   # x <- seq(50, 150, length.out = 1000)
   # xmin = 50
@@ -36,7 +37,7 @@ plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yt
   )
   
   p <- ggplot(density_data, aes(x = x, y = y)) +
-    geom_line(size = 0.8, color = line_color) +  # Custom line color
+    geom_line(size = lwd, color = line_color) +  # Custom line color
     
     # Styling
     labs(title = main, x = NULL, y = "Density") +
@@ -184,6 +185,13 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_narrow, line_color = 
 
 
 
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_wide, line_color = "steelblue2",
+               yticks = yticks, main = "", ylim = ylim, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_medium, line_color = "steelblue2",
+               yticks = yticks, main = "", ylim = ylim, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_narrow, line_color = "steelblue2",
+               yticks = yticks, main = "", ylim = ylim, lwd = 2)
+
 #--------------
 ### Amoroso ###
 #--------------
@@ -238,6 +246,13 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo3,
                line_color = "springgreen3", main = lab3, yticks = yticks)
 
 
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo1,
+               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo2,
+               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo3,
+               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
+
 
 #------------------
 ### Ex-Gaussian ###
@@ -249,7 +264,7 @@ par_exgauss2 <- c(1, 0.5, 2)
 par_exgauss3 <- c(1, 0.9, 3)
 
 # Generate x values for the plot
-x_vals <- seq(0, 9, length.out = 1000)
+x_vals <- seq(-1, 10, length.out = 1000)
 
 # Generate ex-Gaussian density values
 dens_exgauss1 <- dexGAUS(x_vals, par_exgauss1[1], par_exgauss1[2],
@@ -277,8 +292,8 @@ lab3 <- expression(bold(paste("ex-Gaussian(",
                               ")")))
 
 # Prepare parameters for plots
-xmin = 0
-xmax = 9
+xmin = -1
+xmax = 10
 ylim = c(0, 0.5)
 yticks = c(0, 0.5)
 
@@ -289,6 +304,14 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss2
                line_color = "violetred3", main = lab2, yticks = yticks)
 plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3,
                line_color = "violetred3", main = lab3, yticks = yticks)
+
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss1,
+               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss2,
+               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3,
+               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
+
 
 
 #-------------------
@@ -301,7 +324,7 @@ par_mnorm2 <- c(0.5, 3.7, 0.7, 6, 0.8)
 par_mnorm3 <- c(0.8, 3.5, 1.5, 7, 1)
 
 # Generate x values for the plot
-x_vals <- seq(0, 9, length.out = 1000)
+x_vals <- seq(-1, 10, length.out = 1000) #0.9
 
 # Generate mixed normal density values
 dens_mnorm1 <- dmixnorm(x_vals, p=par_mnorm1[1],
@@ -342,12 +365,12 @@ lab3 <- expression(bold(paste("ex-Gaussian(",
 
 
 # Prepare parameters for plots
-xmin = 0
-xmax = 9
+xmin = -1
+xmax = 10
 ylim = c(0, 0.3)
 yticks = c(0, 0.3)
 
-# Plot the three ex-Gaussians in separate plots
+# Plot the three mixed Normals in separate plots
 plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm1,
                line_color = "darkorange3", main = lab1, yticks = yticks)
 plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm2,
@@ -356,5 +379,113 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
                line_color = "darkorange3", main = lab3, yticks = yticks)
 
 
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm1,
+               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm2,
+               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
+plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
+               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+### Analyze results: Function to make result dataframes
+################################################################################
+
+# Define a function to compute proportions and create a data frame
+compute_proportions <- function(res, pars) {
+  sample_sizes <- c("n25", "n50", "n100", "n200")
+  
+  # Create a list to store proportion tables
+  prop_list <- lapply(sample_sizes, function(n) {
+    table(res[[pars]][[n]]$win_df$max_logL_method) / 100
+  })
+  
+  # Convert to a data frame
+  prop_df <- as.data.frame(do.call(cbind, prop_list))
+  
+  # Set column names explicitly
+  colnames(prop_df) <- sample_sizes
+  
+  return(prop_df)
+}
+
+# Define a function to compute proportions and create a data frame
+compute_proportions <- function(res, pars) {
+  sample_sizes <- c("n25", "n50", "n100", "n200")
+  
+  # Get all unique method names across all sample sizes
+  all_methods <- unique(unlist(lapply(sample_sizes, function(n) {
+    names(table(res[[pars]][[n]]$win_df$max_logL_method))
+  })))
+  
+  # Create a list to store proportion tables with all methods included
+  prop_list <- lapply(sample_sizes, function(n) {
+    tab <- table(res[[pars]][[n]]$win_df$max_logL_method) / 100
+    full_tab <- setNames(rep(0, length(all_methods)), all_methods)  # Initialize with 0s
+    full_tab[names(tab)] <- tab  # Fill in existing values
+    return(full_tab)
+  })
+  
+  # Convert to a data frame
+  prop_df <- as.data.frame(do.call(cbind, prop_list))
+  
+  # Set column names explicitly
+  colnames(prop_df) <- sample_sizes
+  
+  return(prop_df)
+}
+
+
+################################################################################
+### Analyze results: Normal distribution
+################################################################################
+
+res_normal <- readRDS("res_normal_vipasha.rds")
+
+(norm1_df <- compute_proportions(res_normal, "pars1"))
+(norm2_df <- compute_proportions(res_normal, "pars2"))
+(norm3_df <- compute_proportions(res_normal, "pars3"))
+
+
+################################################################################
+### Analyze results: ex-Gaussian distribution
+################################################################################
+
+res_exgauss <- readRDS("res_exgauss.rds")
+
+(exgauss1_df <- compute_proportions(res_exgauss, "pars1"))
+(exgauss2_df <- compute_proportions(res_exgauss, "pars2"))
+(exgauss3_df <- compute_proportions(res_exgauss, "pars3"))
+
+
+################################################################################
+### Analyze results: ex-Gaussian distribution
+################################################################################
+
+res_exgauss <- readRDS("res_exgauss.rds")
+
+(exgauss1_df <- compute_proportions(res_exgauss, "pars1"))
+(exgauss2_df <- compute_proportions(res_exgauss, "pars2"))
+(exgauss3_df <- compute_proportions(res_exgauss, "pars3"))
+
+
+################################################################################
+### Analyze results: Amoroso distribution
+################################################################################
+
+res_amo <- readRDS("res_amo.rds")
+
+(amo1_df <- compute_proportions(res_amo, "pars1"))
+(amo2_df <- compute_proportions(res_amo, "pars2"))
+(amo3_df <- compute_proportions(res_amo, "pars3"))
 
 

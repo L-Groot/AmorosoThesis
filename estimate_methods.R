@@ -220,7 +220,9 @@ plot_methods <- function(dat, res,
                          bins = 30,
                          method_to_plot = NULL,
                          alpha = 1,
-                         main = NULL) {  # New argument 'main'
+                         main = NULL,
+                         histfill = "grey90",
+                         histoutline = "grey80") {
   
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid
@@ -267,7 +269,7 @@ plot_methods <- function(dat, res,
     
     p <- ggplot() +
       geom_histogram(data = hist_data, aes(x = x, y = ..density..),
-                     bins = bins, fill = "grey90", color = "grey80", alpha = 0.5)
+                     bins = bins, fill = histfill, color = histoutline, alpha = 0.5)
     
     if (!is.null(generatingnormal)) {
       p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
@@ -347,6 +349,130 @@ plot_methods <- function(dat, res,
       plot_list[[meth]] <- p
     }
     grid.arrange(grobs = plot_list, ncol = 5)
+  }
+}
+
+
+#-------------------------------------------------------------------------------
+# Plot multiple methods on one histogram
+#-------------------------------------------------------------------------------
+
+plot_some_methods <- function(dat, res,
+                         plot_common_x = TRUE,
+                         generatingnormal = NULL, # supply (mean, sd)
+                         generatingamoroso = NULL, # supply (a, l, c, mu)
+                         generatingexgauss = NULL, # supply (mu, sigma, nu)
+                         xticks = NULL,
+                         yticks = NULL,
+                         ymax = NULL,
+                         xmin = NULL,
+                         xmax = NULL,
+                         bins = 30,
+                         method_to_plot = NULL,
+                         alpha = 1,
+                         main = NULL,
+                         histfill = "grey90",
+                         histoutline = "grey80") {
+  
+  modlist_all <- res$modlist
+  modlist_valid <- res$modlist_valid
+  modlist_valid_interp <- res$modlist_valid_interp
+  
+  modlist_plot <- if (plot_common_x) modlist_valid_interp else modlist_valid
+  
+  if (is.null(ymax)) ymax <- res$ymax
+  if (is.null(xmin)) xmin_plot <- res$xmin_plot else xmin_plot <- xmin
+  if (is.null(xmax)) xmax_plot <- res$xmax_plot else xmax_plot <- xmax
+  
+  cat("ymax: ", ymax, "\n")
+  cat("xmin_plot: ", xmin_plot, "\n")
+  cat("xmax_plot: ", xmax_plot, "\n")
+  
+  all_titles <- list(
+    rdens = "R density()",
+    scKDE_2infplus = "adj. KDE",
+    mnorm = "Mixed Normal",
+    amo_hell_cdf = "Amoroso (Hell-CDF)",
+    amo_hell_pdf = "Amoroso (Hell-PDF)"
+  )
+  
+  valid_titles <- all_titles[intersect(names(all_titles), names(modlist_valid))]
+  titlevec <- unlist(valid_titles)
+  colors <- setNames(c("royalblue", "springgreen4", "orange3", "hotpink3", "purple3"), names(valid_titles))
+  
+  df_list <- lapply(names(modlist_plot), function(name) {
+    data.frame(
+      x = modlist_plot[[name]]$x,
+      y = modlist_plot[[name]]$y,
+      method = name
+    )
+  })
+  
+  df_plot <- bind_rows(df_list)
+  hist_data <- data.frame(x = dat)
+  
+  if (!is.null(method_to_plot) && all(method_to_plot %in% names(valid_titles))) {
+    method_data <- df_plot %>% filter(method %in% method_to_plot)
+    
+    p <- ggplot() +
+      geom_histogram(data = hist_data, aes(x = x, y = ..density..),
+                     bins = bins, fill = histfill, color = histoutline, alpha = 0.5)
+    
+    if (!is.null(generatingnormal)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100),
+                                       mean = generatingnormal[1], 
+                                       sd = generatingnormal[2])), 
+                         color = "grey60", linetype = "dashed", size = 1)
+    }
+    
+    if (!is.null(generatingamoroso)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100),
+                                      generatingamoroso[1], generatingamoroso[2], 
+                                      generatingamoroso[3], generatingamoroso[4])), 
+                         color = "grey60", linetype = "dashed", size = 1)
+    }
+    
+    if (!is.null(generatingexgauss)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
+                                         generatingexgauss[1], generatingexgauss[2], 
+                                         generatingexgauss[3])), 
+                         color = "grey60", linetype = "dashed", size = 0.7)
+    }
+    
+    p <- p +
+      geom_line(data = method_data, aes(x = x, y = y, color = method), size = 0.8, alpha = alpha) +
+      scale_color_manual(values = colors[method_to_plot], labels = valid_titles[method_to_plot]) +
+      labs(title = ifelse(is.null(main), paste(valid_titles[method_to_plot], collapse = " & "), main),
+           x = NULL, y = "Density", color = "Method") +
+      theme_minimal() +
+      theme(
+        text = element_text(family = "Times"),
+        plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
+        axis.title = element_text(size = 10, face = "bold"),
+        axis.text = element_text(size = 10),
+        plot.margin = margin(1, 1, 1, 1, "lines"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(color = "black"),
+        legend.position = c(0.9,0.9)
+      ) +
+      coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+    
+    if (!is.null(xticks)) {
+      p <- p + scale_x_continuous(breaks = xticks)
+    }
+    
+    if (!is.null(yticks)) {
+      p <- p + scale_y_continuous(breaks = yticks)
+    }
+    
+    print(p)
+  } else {
+    stop("Invalid method_to_plot: please supply one or two valid method names.")
   }
 }
 

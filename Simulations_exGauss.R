@@ -166,7 +166,7 @@ pars <- pars_list[[parsetnr]]
 res_exgauss[[parsetnr]]$pars <- pars
 
 # Loop through sample sizes (starting at the chosen sample size)
-for (n_ix in 3:4) {
+for (n_ix in 4:4) {
   
   # Get current sample size
   n <- nvec[n_ix]
@@ -188,7 +188,7 @@ for (n_ix in 3:4) {
   na_medL <- res_exgauss[[parsetnr]][[n_ix + 1]]$na_medL
   na_logL <- res_exgauss[[parsetnr]][[n_ix + 1]]$na_logL
   
-  start_ix <- ifelse(n == 100, 26, 1)
+  start_ix <- ifelse(n == 200, 31, 1)
   
   # Loop through iterations (starting at the chosen iteration)
   for (i in start_ix:nrep) {
