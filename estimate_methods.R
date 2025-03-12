@@ -356,23 +356,24 @@ plot_methods <- function(dat, res,
 #-------------------------------------------------------------------------------
 # Plot multiple methods on one histogram
 #-------------------------------------------------------------------------------
-
 plot_some_methods <- function(dat, res,
-                         plot_common_x = TRUE,
-                         generatingnormal = NULL, # supply (mean, sd)
-                         generatingamoroso = NULL, # supply (a, l, c, mu)
-                         generatingexgauss = NULL, # supply (mu, sigma, nu)
-                         xticks = NULL,
-                         yticks = NULL,
-                         ymax = NULL,
-                         xmin = NULL,
-                         xmax = NULL,
-                         bins = 30,
-                         method_to_plot = NULL,
-                         alpha = 1,
-                         main = NULL,
-                         histfill = "grey90",
-                         histoutline = "grey80") {
+                              plot_common_x = TRUE,
+                              generatingnormal = NULL, # supply (mean, sd)
+                              generatingamoroso = NULL, # supply (a, l, c, mu)
+                              generatingexgauss = NULL, # supply (mu, sigma, nu)
+                              xticks = NULL,
+                              yticks = NULL,
+                              ymax = NULL,
+                              xmin = NULL,
+                              xmax = NULL,
+                              bins = 30,
+                              method_to_plot = NULL,
+                              alpha = 1,
+                              lwd = 2,  # New argument for line thickness
+                              legend = TRUE,  # New argument to toggle legend
+                              main = NULL,
+                              histfill = "grey90",
+                              histoutline = "grey80") {
   
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid
@@ -423,7 +424,7 @@ plot_some_methods <- function(dat, res,
                              y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100),
                                        mean = generatingnormal[1], 
                                        sd = generatingnormal[2])), 
-                         color = "grey60", linetype = "dashed", size = 1)
+                         color = "grey60", linetype = "dashed", size = lwd)
     }
     
     if (!is.null(generatingamoroso)) {
@@ -431,7 +432,7 @@ plot_some_methods <- function(dat, res,
                              y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100),
                                       generatingamoroso[1], generatingamoroso[2], 
                                       generatingamoroso[3], generatingamoroso[4])), 
-                         color = "grey60", linetype = "dashed", size = 1)
+                         color = "grey60", linetype = "dashed", size = lwd)
     }
     
     if (!is.null(generatingexgauss)) {
@@ -439,11 +440,11 @@ plot_some_methods <- function(dat, res,
                              y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
                                          generatingexgauss[1], generatingexgauss[2], 
                                          generatingexgauss[3])), 
-                         color = "grey60", linetype = "dashed", size = 0.7)
+                         color = "grey60", linetype = "dashed", size = lwd)
     }
     
     p <- p +
-      geom_line(data = method_data, aes(x = x, y = y, color = method), size = 0.8, alpha = alpha) +
+      geom_line(data = method_data, aes(x = x, y = y, color = method), size = lwd, alpha = alpha) +
       scale_color_manual(values = colors[method_to_plot], labels = valid_titles[method_to_plot]) +
       labs(title = ifelse(is.null(main), paste(valid_titles[method_to_plot], collapse = " & "), main),
            x = NULL, y = "Density", color = "Method") +
@@ -458,7 +459,7 @@ plot_some_methods <- function(dat, res,
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         axis.line = element_line(color = "black"),
-        legend.position = c(0.9,0.9)
+        legend.position = if (legend) c(0.9, 0.9) else "none"  # Toggle legend
       ) +
       coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
     
@@ -475,8 +476,6 @@ plot_some_methods <- function(dat, res,
     stop("Invalid method_to_plot: please supply one or two valid method names.")
   }
 }
-
-
 
 #-------------------------------------------------------------------------------
 # Hell-CDF vs Hell-PDF function

@@ -45,6 +45,8 @@ if (file.exists("res_amo.rds")) {
   )
 }
 
+
+
 #-------------------------------------------------------------------------------
 # Loop through parameter sets, skipping completed ones
 for (parsetnr in restart_parsetnr:length(pars_list)) {

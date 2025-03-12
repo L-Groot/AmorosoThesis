@@ -154,12 +154,45 @@ plot_some_methods(simdat_100, res, method_to_plot = c("rdens","amo_hell_cdf"),
                   xmin = 100, xmax = 600, ymax = 0.01, yticks = c(0,0.01))
 
 
+## Normal
 
+# Set seed for reproducibility
+set.seed(44)
 
+# Generate data
+dat <- rnorm(25)
 
+# Estimate methods
+res <- estimate_methods(dat)
 
+# List of methods to plot
+methods <- c("rdens", "amo_hell_cdf", "amo_hell_pdf", "scKDE_2infplus", "mnorm")
+
+# Loop through each method and save the plot
+for (method in methods) {
+  plot_name <- paste0("figures1/standard normal_", method, ".png")  # File name
   
+  # Save the plot
+  ggsave(filename = plot_name,
+         plot = plot_some_methods(dat, res, method_to_plot = c(method),
+                                  alpha = 1, histfill = "grey90", histoutline = "grey80", main = "",
+                                  xmin = -3, xmax = 4, ymax = 0.7, yticks = c(0, 0.7), lwd = 2,
+                                  legend = FALSE),
+         width = 4, height = 4, dpi = 300)
+  
+  cat("Saved:", plot_name, "\n")  # Print confirmation
+}
 
 
 
 
+#-------------------------------------------------------------------------------
+# investigate CDF vs PDF differences
+set.seed(89)
+exgdat <- rexGAUS(25,1,0.1,2)
+res <- estimate_methods(exgdat)
+plot_methods(exgdat,res,generatingexgauss = c(1,0.1,2), method_to_plot = "rdens", ymax = 0.8, main = "")
+plot_methods(exgdat,res,generatingexgauss = c(1,0.1,2), method_to_plot = "amo_hell_cdf", ymax = 0.8, main = "")
+plot_methods(exgdat,res,generatingexgauss = c(1,0.1,2), method_to_plot = "amo_hell_pdf", ymax = 0.8, main = "")
+
+plot_some_methods(exgdat,res,method_to_plot = "amo_hell_pdf", lwd = 1, ymax = 0.6, histfill = "grey100", histoutline = "grey100", legend = FALSE)

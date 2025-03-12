@@ -396,11 +396,17 @@ plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
 
 
 
+
 ################################################################################
 ### Analyze results: Function to make result dataframes
 ################################################################################
 
-# Define a function to compute proportions and create a data frame
+table(res_exgauss$pars1$n200$win_df$max_logL_method)
+
+res <- res_exgauss
+pars <- "pars1"
+
+# Function to compute proportions and create a data frame
 compute_proportions <- function(res, pars) {
   sample_sizes <- c("n25", "n50", "n100", "n200")
   
@@ -409,40 +415,36 @@ compute_proportions <- function(res, pars) {
     table(res[[pars]][[n]]$win_df$max_logL_method) / 100
   })
   
-  # Convert to a data frame
-  prop_df <- as.data.frame(do.call(cbind, prop_list))
+  # Fill in any methods with 0 entries
+  prop_df <- combine_prop_list(prop_list)
   
-  # Set column names explicitly
   colnames(prop_df) <- sample_sizes
   
   return(prop_df)
 }
 
-# Define a function to compute proportions and create a data frame
-compute_proportions <- function(res, pars) {
-  sample_sizes <- c("n25", "n50", "n100", "n200")
+
+# Function to standardize row names and convert to a data frame
+combine_prop_list <- function(prop_list) {
+  # Define the required row names (method names in the correct order)
+  all_methods <- c("amo_hell_cdf", "amo_hell_pdf", "mnorm", "rdens", "scKDE_2infplus")
   
-  # Get all unique method names across all sample sizes
-  all_methods <- unique(unlist(lapply(sample_sizes, function(n) {
-    names(table(res[[pars]][[n]]$win_df$max_logL_method))
-  })))
-  
-  # Create a list to store proportion tables with all methods included
-  prop_list <- lapply(sample_sizes, function(n) {
-    tab <- table(res[[pars]][[n]]$win_df$max_logL_method) / 100
-    full_tab <- setNames(rep(0, length(all_methods)), all_methods)  # Initialize with 0s
-    full_tab[names(tab)] <- tab  # Fill in existing values
-    return(full_tab)
+  # Iterate over each list element, ensuring all methods are present and ordered
+  prop_list_filled <- lapply(prop_list, function(x) {
+    x <- setNames(as.numeric(x), names(x))  # Ensure numeric values
+    x[setdiff(all_methods, names(x))] <- 0  # Add missing methods with 0
+    x[all_methods]  # Reorder to match the desired order
   })
   
-  # Convert to a data frame
-  prop_df <- as.data.frame(do.call(cbind, prop_list))
+  # Combine into a data frame
+  prop_df <- as.data.frame(do.call(cbind, prop_list_filled))
   
-  # Set column names explicitly
-  colnames(prop_df) <- sample_sizes
+  # Set row names
+  rownames(prop_df) <- all_methods
   
   return(prop_df)
 }
+
 
 
 ################################################################################
@@ -468,17 +470,6 @@ res_exgauss <- readRDS("res_exgauss.rds")
 
 
 ################################################################################
-### Analyze results: ex-Gaussian distribution
-################################################################################
-
-res_exgauss <- readRDS("res_exgauss.rds")
-
-(exgauss1_df <- compute_proportions(res_exgauss, "pars1"))
-(exgauss2_df <- compute_proportions(res_exgauss, "pars2"))
-(exgauss3_df <- compute_proportions(res_exgauss, "pars3"))
-
-
-################################################################################
 ### Analyze results: Amoroso distribution
 ################################################################################
 
@@ -489,3 +480,14 @@ res_amo <- readRDS("res_amo.rds")
 (amo3_df <- compute_proportions(res_amo, "pars3"))
 
 
+################################################################################
+### Analyze results: Mixed normal distribution
+################################################################################
+
+res_mnorm <- readRDS("res_mnorm.rds")
+
+(mnorm1_df <- compute_proportions(res_mnorm, "pars1"))
+(mnorm2_df <- compute_proportions(res_mnorm, "pars2"))
+(mnorm3_df <- compute_proportions(res_mnorm, "pars3"))
+
+  
