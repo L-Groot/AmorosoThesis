@@ -15,9 +15,10 @@ library(patchwork)
 # Estimate density with the 5 candidate methods
 geyser_dat <- multimode::geyser
 geyser_res <- estimate_methods(geyser_dat)
-plot_methods(geyser_dat, geyser_res, yticks = c(0,0.05))
-
-
+plot_methods(geyser_dat, geyser_res,
+             xticks = c(30,70,110), yticks = c(0,0.05),
+             xmin = 30, xmax = 110,
+             cex_main = 18, cex_axislab = 15, cex_axistick = 15)
 
 #----------------------
 # (2) Unimodal RT data
@@ -51,7 +52,13 @@ s01gs <- read.table("noisedat/S01SS.DAT") %>%
 # Estimate density with the 5 candidate methods
 rt_dat <- s01gs$rt
 rt_res <- estimate_methods(rt_dat)
-plot_methods(rt_dat, rt_res, yticks = c(0,0.01))
+plot_methods(rt_dat, rt_res,
+             xticks = c(150,550), yticks = NULL,
+             xmin = 150, xmax = 550,
+             cex_main = 18, cex_axislab = 15, cex_axistick = 15)
+
+glimpse(rt_dat)
+max(rt_dat)
 
 # Estimate ex-gaussian on the data
 library(ExGaussEstim)

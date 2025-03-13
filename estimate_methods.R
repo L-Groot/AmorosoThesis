@@ -25,6 +25,7 @@ require(ggplot2)
 require(tidyverse)
 require(tidyr)
 require(gridExtra)
+require(grid)
 require(gamlss.dist)
 require(tidymodels)
 require(spatstat)
@@ -205,8 +206,6 @@ estimate_methods <- function(dat) {
 
 
 #-------------------------------------------------------------------------------
-# plot_methods() function
-#-------------------------------------------------------------------------------
 plot_methods <- function(dat, res,
                          plot_common_x = TRUE,
                          generatingnormal = NULL, #supply (mean,sd)
@@ -218,6 +217,9 @@ plot_methods <- function(dat, res,
                          xmin = NULL,
                          xmax = NULL,
                          bins = 30,
+                         cex_main = 12,
+                         cex_axislab = 10,
+                         cex_axistick = 10,
                          method_to_plot = NULL,
                          alpha = 1,
                          main = NULL,
@@ -302,9 +304,9 @@ plot_methods <- function(dat, res,
       theme_minimal() +
       theme(
         text = element_text(family = "Times"),
-        plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
-        axis.title = element_text(size = 10, face = "bold"),
-        axis.text = element_text(size = 10),
+        plot.title = element_text(size = cex_main, face = "bold", hjust = 0.5, margin = margin(b = 12)),
+        axis.title = element_text(size = cex_axislab, face = "bold"),
+        axis.text = element_text(size = cex_axistick),
         plot.margin = margin(1, 1, 1, 1, "lines"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -322,36 +324,62 @@ plot_methods <- function(dat, res,
     }
     
     print(p)
+    
   } else {
+    
     plot_list <- list()
+    
     for (meth in names(valid_titles)) {
       method_data <- df_plot %>% filter(method == meth)
       color <- unique(method_data$color)
+      
       p <- ggplot() +
         geom_histogram(data = hist_data, aes(x = x, y = ..density..),
                        bins = bins, fill = "grey90", color = "grey80", alpha = 0.5) +
         geom_line(data = method_data, aes(x = x, y = y), color = color, size = 0.8, alpha = alpha) +
-        labs(title = ifelse(is.null(main), valid_titles[[meth]], main),  # Use 'main' if provided
-             x = NULL, y = "Density") +
+        labs(title = ifelse(is.null(main), valid_titles[[meth]], main),  
+             x = NULL, 
+             y = NULL) +  # Remove y-axis label for all plots
         theme_minimal() +
         theme(
           text = element_text(family = "Times"),
-          plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
-          axis.title = element_text(size = 10, face = "bold"),
-          axis.text = element_text(size = 10),
-          plot.margin = margin(1, 1, 1, 1, "lines"),
+          plot.title = element_text(size = cex_main, face = "bold", hjust = 0.5, margin = margin(b = 8)),
+          axis.title = element_text(size = cex_axislab, face = "bold"),
+          axis.text = element_text(size = cex_axistick),
+          plot.margin = margin(1, 1, 1, 1, "lines"),  # Reduce space between plots
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(color = "black")
-        ) +
-        coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+        ) 
+        #coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+      
+        if (!is.null(xticks)) {
+          p <- p + scale_x_continuous(limits = c(xmin,xmax),
+                                      breaks = xticks)
+        } else {
+          p <- p + scale_x_continuous(limits = c(xmin,xmax))
+        }
+        
+        if (!is.null(yticks)) {
+          p <- p + scale_y_continuous(limits = c(0,ymax),
+                                      breaks = yticks)
+        } else {
+          p <- p + scale_y_continuous(limits = c(0,ymax))
+        }
+
+      
       plot_list[[meth]] <- p
     }
-    grid.arrange(grobs = plot_list, ncol = 5)
+    
+    layout_matrix <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 1)
+    grid.arrange(grobs = c(list(nullGrob()), plot_list), layout_matrix = layout_matrix, widths = c(0.2, 1, 1, 1, 1, 1))
+    grid.text("Density", rot = 90, x = unit(0.02, "npc"), 
+              gp = gpar(fontsize = cex_axislab, fontface = "bold", fontfamily = "Times"))
+    
+    
   }
 }
-
 
 #-------------------------------------------------------------------------------
 # Plot multiple methods on one histogram
@@ -451,27 +479,34 @@ plot_some_methods <- function(dat, res,
       theme_minimal() +
       theme(
         text = element_text(family = "Times"),
-        plot.title = element_text(size = 12, face = "bold", hjust = 0.5, margin = margin(b = 12)),
-        axis.title = element_text(size = 10, face = "bold"),
-        axis.text = element_text(size = 10),
+        plot.title = element_text(size = cex_main, face = "bold", hjust = 0.5, margin = margin(b = 12)),
+        axis.title = element_text(size = cex_axislab, face = "bold"),
+        axis.text = element_text(size = cex_axistick),
         plot.margin = margin(1, 1, 1, 1, "lines"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         axis.line = element_line(color = "black"),
         legend.position = if (legend) c(0.9, 0.9) else "none"  # Toggle legend
-      ) +
-      coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+      )
+      #coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
     
     if (!is.null(xticks)) {
-      p <- p + scale_x_continuous(breaks = xticks)
+      p <- p + scale_x_continuous(limits = c(xmin,xmax),
+                                  breaks = xticks)
+    } else {
+      p <- p + scale_x_continuous(limits = c(xmin,xmax))
     }
     
     if (!is.null(yticks)) {
-      p <- p + scale_y_continuous(breaks = yticks)
+      p <- p + scale_y_continuous(limits = c(0,ymax),
+                                  breaks = yticks)
+    } else {
+      p <- p + scale_y_continuous(limits = c(0,ymax))
     }
     
     print(p)
+    
   } else {
     stop("Invalid method_to_plot: please supply one or two valid method names.")
   }

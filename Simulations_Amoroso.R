@@ -95,7 +95,7 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
       
       # Simulate data
       set.seed(seedvec[i])
-      dat <- rgg4(n, a = pars[1], l = pars[2], c = pars[3], mu = pars[4])
+      dat <- rgg4(n, a = pars[1], l = pars[2], c = pars[3], mu = pars[4], sequence = FALSE)
       
       # Estimate methods and get PP measures
       res <- get_pp(dat, method = "loocv",
