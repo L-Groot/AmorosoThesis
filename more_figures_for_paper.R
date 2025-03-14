@@ -53,12 +53,9 @@ s01gs <- read.table("noisedat/S01SS.DAT") %>%
 rt_dat <- s01gs$rt
 rt_res <- estimate_methods(rt_dat)
 plot_methods(rt_dat, rt_res,
-             xticks = c(150,550), yticks = NULL,
+             xticks = c(150,350,550), yticks = c(0,0.01),
              xmin = 150, xmax = 550,
              cex_main = 18, cex_axislab = 15, cex_axistick = 15)
-
-glimpse(rt_dat)
-max(rt_dat)
 
 # Estimate ex-gaussian on the data
 library(ExGaussEstim)

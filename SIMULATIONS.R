@@ -12,32 +12,21 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # Helper function that plots one density
-plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yticks = NULL, ylim = NULL,
-                           lwd = 0.8) {
-  
-  # x <- seq(50, 150, length.out = 1000)
-  # xmin = 50
-  # xmax = 150
-  # y1 = dens_wide
-  # main = lab1
-  # line_color = "steelblue"
-  # yticks = c(0,0.06)
-  # ylim = c(0,0.06)
-    
-  if (is.null(ylim)) {
-    ylim = c(0, max(density_data$y) * 1.1)
-  } else {
-    ylim = c(ylim[1], ylim[2])
-  }
+plot_1_density <- function(xvec, yvec, xmin, xmax, ymax, main = "", line_color = "steelblue",
+                           yticks = NULL, xticks = NULL, lwd = 2, cex.tick = 1, yaxis = TRUE) {
   
   # Prepare data for ggplot2
   density_data <- data.frame(
-    x = x,
-    y = y1
+    x = xvec,
+    y = yvec
   )
   
+  if (is.null(ymax)) {
+    ymax <- max(density_data$y) * 1.1
+  }
+  
   p <- ggplot(density_data, aes(x = x, y = y)) +
-    geom_line(size = lwd, color = line_color) +  # Custom line color
+    geom_line(size = lwd, color = line_color) +  # Custom line color and thickness
     
     # Styling
     labs(title = main, x = NULL, y = "Density") +
@@ -48,7 +37,7 @@ plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yt
       text = element_text(family = "Times"),  # Times New Roman font
       plot.title = element_text(size = 14, face = "bold", hjust = 0.5, margin = margin(b = 12)),
       axis.title = element_text(size = 10, face = "bold"),
-      axis.text = element_text(size = 10),
+      axis.text = element_text(size = 10 * cex.tick),  # Adjust tick font size based on cex.tick
       plot.margin = margin(1, 1, 1, 1, "lines"),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
@@ -57,77 +46,27 @@ plot_1_density <- function(x, xmin, xmax, y1, main, line_color = "steelblue", yt
       
       # Remove the legend
       legend.position = "none"
-    ) +
-    coord_cartesian(xlim = c(xmin, xmax), ylim = ylim)
+    )
   
   # If yticks is provided, modify the y-axis ticks
   if (!is.null(yticks)) {
-    # Calculate breaks from the yticks length (proportional spacing)
-    breaks <- seq(0, ylim[2], length.out = length(yticks))
-    
-    # Apply custom yticks labels and breaks
-    p <- p + scale_y_continuous(breaks = breaks, labels = yticks)
+    breaks <- seq(0, ymax, length.out = length(yticks))
+    p <- p + scale_y_continuous(limits = c(0, ymax),
+                                breaks = breaks,
+                                labels = yticks)
   }
   
-  # Show the plot
-  print(p)
+  # If xticks is provided, modify the x-axis ticks
+  if (!is.null(xticks)) {
+    breaks <- seq(xmin, xmax, length.out = length(xticks))
+    p <- p + scale_x_continuous(limits = c(xmin, xmax),
+                                breaks = breaks,
+                                labels = xticks)
+  }
   
-  # Return the plot
-  return(p)
-}
-
-# Helper function to show the 3 distributions we simulate from
-plot_3_densities <- function(x, xmin, xmax, y1, y2, y3, main, y1_lab, y2_lab, y3_lab, yticks = NULL) {
-  
-  # Prepare data for ggplot2
-  density_data <- data.frame(
-    x = rep(x, 3),
-    y = c(y1, y2, y3),
-    distribution = factor(rep(c("Dist 1", "Dist 2", "Dist 3"), each = length(x)))
-  )
-  
-  p <- ggplot(density_data, aes(x = x, y = y, color = distribution)) +
-    geom_line(size = 0.8) +
-    
-    # Styling
-    labs(title = main, x = NULL, y = "Density") +
-    
-    # Custom color scale and labels for the legend
-    scale_color_manual(values = c("steelblue2", "springgreen2", "violetred2"),
-                       labels = c(y1_lab, y2_lab, y3_lab)) +
-    
-    # Theme and other customizations
-    theme_minimal() +
-    theme(
-      text = element_text(family = "Times"),  # Times New Roman font
-      plot.title = element_text(size = 14, face = "bold", hjust = 0.5, margin = margin(b = 12)),
-      axis.title = element_text(size = 10, face = "bold"),
-      axis.text = element_text(size = 10),
-      plot.margin = margin(1, 1, 1, 1, "lines"),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.background = element_blank(),
-      axis.line = element_line(color = "black"),
-      
-      # Legend inside the plot (top right)
-      legend.position = c(1, 1),
-      legend.justification = c("right", "top"),
-      legend.background = element_rect(fill = "white", color = "black", size = 0.2),
-      legend.title = element_blank(),
-      legend.text = element_text(size = 12)
-    ) +
-    coord_cartesian(xlim = c(xmin, xmax), ylim = c(0, max(density_data$y) * 1.1)) +
-    
-    # Custom legend guide
-    guides(color = guide_legend(title = "Distributions"))
-  
-  # If yticks is provided, modify the y-axis ticks
-  if (!is.null(yticks)) {
-    # Calculate breaks from the yticks length (proportional spacing)
-    breaks <- seq(0, max(density_data$y), length.out = length(yticks))
-    
-    # Apply custom yticks labels and breaks
-    p <- p + scale_y_continuous(breaks = breaks, labels = yticks)
+  # Optionally remove the y-axis
+  if (!yaxis) {
+    p <- p + theme(axis.text.y = element_blank(), axis.title.y = element_blank(), axis.line.y = element_blank())
   }
   
   # Show the plot
@@ -172,25 +111,20 @@ lab3 <- expression(bold(paste("Normal(",
 # Prepare parameters for plots
 xmin = 50
 xmax = 150
-ylim = c(0,0.08)
+ymax = 0.08
 yticks = c(0,0.08)
+cex.tick = 2.5
 
 # Plot the three Normals in separate plots
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_wide, line_color = "steelblue2",
-               yticks = yticks, main = lab1, ylim = ylim)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_medium, line_color = "steelblue2",
-               yticks = yticks, main = lab2, ylim = ylim)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_narrow, line_color = "steelblue2",
-               yticks = yticks, main = lab3, ylim = ylim)
-
-
-
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_wide, line_color = "steelblue2",
-               yticks = yticks, main = "", ylim = ylim, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_medium, line_color = "steelblue2",
-               yticks = yticks, main = "", ylim = ylim, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, y1 = dens_narrow, line_color = "steelblue2",
-               yticks = yticks, main = "", ylim = ylim, lwd = 2)
+plot_1_density(x_vals, dens_wide, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick, yticks = c(0,0.08),
+               line_color = "steelblue3")
+plot_1_density(x_vals, dens_medium, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick, yticks = c(0,0.08),
+               line_color = "steelblue3")
+plot_1_density(x_vals, dens_narrow, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick, yticks = c(0,0.08),
+               line_color = "steelblue3")
 
 #--------------
 ### Amoroso ###
@@ -234,25 +168,24 @@ lab3 <- expression(bold(paste("Amoroso(",
 # Prepare parameters for plots
 xmin = 0
 xmax = 9
-ylim = c(0, 0.6)
+ymax = 0.65
 yticks = c(0, 0.6)
+xticks = c(0,3,6,9)
+cex.tick = 2.5
 
 # Plot the three Amorosos in separate plots
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo1,
-               line_color = "springgreen3", main = lab1, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo2,
-               line_color = "springgreen3", main = lab2, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo3,
-               line_color = "springgreen3", main = lab3, yticks = yticks)
-
-
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo1,
-               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo2,
-               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_amo3,
-               line_color = "springgreen3", main = "", yticks = yticks, lwd = 2)
-
+plot_1_density(x_vals, dens_amo1, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "springgreen3")
+plot_1_density(x_vals, dens_amo2, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "springgreen3")
+plot_1_density(x_vals, dens_amo3, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "springgreen3")
 
 #------------------
 ### Ex-Gaussian ###
@@ -292,27 +225,26 @@ lab3 <- expression(bold(paste("ex-Gaussian(",
                               ")")))
 
 # Prepare parameters for plots
-xmin = -1
+xmin = 0
 xmax = 10
-ylim = c(0, 0.5)
+ymax = 0.5
 yticks = c(0, 0.5)
+xticks = c(0, 2.5, 5, 7.5, 10)
+cex.tick = 2.5
 
 # Plot the three ex-Gaussians in separate plots
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss1,
-               line_color = "violetred3", main = lab1, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss2,
-               line_color = "violetred3", main = lab2, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3,
-               line_color = "violetred3", main = lab3, yticks = yticks)
-
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss1,
-               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss2,
-               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_exgauss3,
-               line_color = "violetred3", main = "", yticks = yticks, lwd = 2)
-
-
+plot_1_density(x_vals, dens_exgauss1, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "violetred3")
+plot_1_density(x_vals, dens_exgauss2, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "violetred3")
+plot_1_density(x_vals, dens_exgauss3, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "violetred3")
 
 #-------------------
 ### Mixed Normal ###
@@ -367,31 +299,24 @@ lab3 <- expression(bold(paste("ex-Gaussian(",
 # Prepare parameters for plots
 xmin = -1
 xmax = 10
-ylim = c(0, 0.3)
+ymax = 0.3
 yticks = c(0, 0.3)
+xticks = c(0,2.5,5,7.5,10)
+cex.tick = 2.5
 
 # Plot the three mixed Normals in separate plots
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm1,
-               line_color = "darkorange3", main = lab1, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm2,
-               line_color = "darkorange3", main = lab2, yticks = yticks)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
-               line_color = "darkorange3", main = lab3, yticks = yticks)
-
-
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm1,
-               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm2,
-               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
-plot_1_density(x_vals, xmin = xmin, xmax = xmax, ylim = ylim, y1 = dens_mnorm3,
-               line_color = "darkorange3", main = "", yticks = yticks, lwd = 2)
-
-
-
-
-
-
-
+plot_1_density(x_vals, dens_mnorm1, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "darkorange2")
+plot_1_density(x_vals, dens_mnorm2, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "darkorange2")
+plot_1_density(x_vals, dens_mnorm3, xmin = xmin, xmax = xmax, ymax = ymax,
+               yaxis = F, main = "", cex.tick = cex.tick,
+               yticks = yticks, xticks = xticks,
+               line_color = "darkorange2")
 
 
 
