@@ -54,7 +54,8 @@ make_gif <- function(dat = NULL,
                      xmax = NULL,
                      generatingnormal = NULL,
                      generatingamoroso = NULL,
-                     generatingexgauss = NULL) {
+                     generatingexgauss = NULL,
+                     main_datagen = "") {
   
   # Create main folder if it doesn't exist
   if (!dir.exists(newfilename)) {
@@ -97,19 +98,19 @@ make_gif <- function(dat = NULL,
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]),
-                   mainmain = T)
+                   mainmain = T, main_datagen = main_datagen)
     } else if (!is.null(generatingexgauss)) {
       pars <- generatingexgauss
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingexgauss = c(pars[1],pars[2],pars[3]),
-                   mainmain = T)
+                   mainmain = T, main_datagen = main_datagen)
     } else {
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
-                   mainmain = T)
+                   mainmain = T, main_datagen = main_datagen)
     }
     
     dev.off()
