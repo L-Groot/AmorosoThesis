@@ -224,6 +224,7 @@ plot_methods <- function(dat, res,
                          alpha = 1,
                          main = NULL,
                          mainmain = FALSE,
+                         main_datagen = NULL,
                          histfill = "grey90",
                          histoutline = "grey80") {
   # dat = dat
@@ -433,10 +434,25 @@ plot_methods <- function(dat, res,
       
     } else {
       
-      titleGrob <- textGrob(paste0("n = ", length(hist_data)),
-                            x = unit(0.05, "npc"), just = "left",
-                            gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
-      
+      if (is.null(main_datagen)) {
+        
+        titleGrob <- textGrob(paste0("n = ", length(dat)),
+                              x = unit(0.05, "npc"), just = "left",
+                              gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
+      } else {
+        
+        titleGrob <- grobTree(
+          textGrob(paste0("n = ", length(dat)),
+                   x = unit(0.02, "npc"), just = "left",
+                   gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times")),
+          
+          textGrob(main_datagen, 
+                   x = unit(0.2, "npc"), just = "left",
+                   gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
+        )
+        
+      }
+
       layout_matrix <- matrix(c(1, 1, 1, 1, 1, 1,
                                 2, 3, 4, 5, 6, 7),
                               nrow = 2, byrow = TRUE)

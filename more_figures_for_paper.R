@@ -67,7 +67,7 @@ sigma <- exGauss_par$sigma
 tau <- exGauss_par$tau
 
 # Use same sample size as original empirical data
-n <- length(rt_dat)
+n <- 2000
 
 # Simulate data from estimated ex-Gaussian
 set.seed(80)
@@ -77,6 +77,21 @@ exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 make_gif(exGauss_simdat, "GIF_exGauss_simdat", max_y = 0.01,
          generatingexgauss = c(mu,sigma,tau),
          xmin = 130, xmax = 530)
+
+
+mu <- 1
+sigma <- 0.1
+tau <- 2
+
+n <- length(rt_dat)
+
+set.seed(80)
+exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
+range(exGauss_simdat)
+
+make_gif(exGauss_simdat, "GIF2", max_y = 0.5,
+         generatingexgauss = c(mu,sigma,tau),
+         xmin = 0, xmax = 15)
 
 
 # Make plots that show how R density vs Amoroso fit the simulated data at diff n
