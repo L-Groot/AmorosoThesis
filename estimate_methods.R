@@ -438,17 +438,17 @@ plot_methods <- function(dat, res,
         
         titleGrob <- textGrob(paste0("n = ", length(dat)),
                               x = unit(0.05, "npc"), just = "left",
-                              gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
+                              gp = gpar(fontsize = 15, fontface = "bold", fontfamily = "Times"))
       } else {
         
         titleGrob <- grobTree(
           textGrob(paste0("n = ", length(dat)),
                    x = unit(0.02, "npc"), just = "left",
-                   gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times")),
+                   gp = gpar(fontsize = 15, fontface = "bold", fontfamily = "Times")),
           
           textGrob(main_datagen, 
                    x = unit(0.2, "npc"), just = "left",
-                   gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
+                   gp = gpar(fontsize = 15, fontface = "bold", fontfamily = "Times"))
         )
         
       }
