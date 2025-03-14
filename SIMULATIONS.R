@@ -326,11 +326,6 @@ plot_1_density(x_vals, dens_mnorm3, xmin = xmin, xmax = xmax, ymax = ymax,
 ### Analyze results: Function to make result dataframes
 ################################################################################
 
-table(res_exgauss$pars1$n200$win_df$max_logL_method)
-
-res <- res_exgauss
-pars <- "pars1"
-
 # Function to compute proportions and create a data frame
 compute_proportions <- function(res, pars) {
   sample_sizes <- c("n25", "n50", "n100", "n200")

@@ -74,8 +74,9 @@ set.seed(80)
 exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 
 # Make GIF to visualize how 5 methods fit the data as more samples become available
-#make_gif(exGauss_simdat, "exGauss_simdat", max_y = 0.01, generatingexgauss = c(mu,sigma,tau),
-#         xmin = 130, xmax = 530)
+make_gif(exGauss_simdat, "GIF_exGauss_simdat", max_y = 0.01,
+         generatingexgauss = c(mu,sigma,tau),
+         xmin = 130, xmax = 530)
 
 
 # Make plots that show how R density vs Amoroso fit the simulated data at diff n

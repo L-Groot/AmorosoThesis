@@ -45,8 +45,11 @@ make_gif <- function(dat = NULL,
                      batch_size = 10,
                      max_y = NULL,
                      svgwidth = 17,
-                     svgheight = 3.4,
+                     svgheight = 5,
                      pngwidth = 3092,
+                     cex_main = 15,
+                     cex_axislab = 13,
+                     cex_axistick = 13,
                      xmin = NULL,
                      xmax = NULL,
                      generatingnormal = NULL,
@@ -83,21 +86,25 @@ make_gif <- function(dat = NULL,
     if (!is.null(generatingnormal)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
-                   xmin = xmin, xmax = xmax,
+                   xmin = xmin, xmax = xmax, cex_main = cex_main,
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingnormal = c(pars[1],pars[2]))
     } else if (!is.null(generatingamoroso)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
-                   xmin = xmin, xmax = xmax,
+                   xmin = xmin, xmax = xmax, cex_main = cex_main,
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]))
     } else if (!is.null(generatingexgauss)) {
       pars <- generatingexgauss
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
-                   xmin = xmin, xmax = xmax,
+                   xmin = xmin, xmax = xmax, cex_main = cex_main,
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingexgauss = c(pars[1],pars[2],pars[3]))
     } else {
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
-                   xmin = xmin, xmax = xmax)
+                   xmin = xmin, xmax = xmax, cex_main = cex_main,
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick)
     }
     
     dev.off()
