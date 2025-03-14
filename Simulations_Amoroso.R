@@ -11,7 +11,7 @@ source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/get_pp.R"))
 
-# Define parameters for three Amoroso distributions
+# Define  parameters for three Amoroso distributions
 par_amo1 <- c(a = 2, l = 0.3, c = 5, mu = 0)
 par_amo2 <- c(a = 5, l = 0.3, c = 5, mu = 0)
 par_amo3 <- c(a = 7, l = 1.3, c = 8, mu = 0)
@@ -139,3 +139,5 @@ for (parsetnr in restart_parsetnr:length(pars_list)) {
 #-------------------------------------------------------------------------------
 # When simulations are done, save the final results
 saveRDS(res_amo, file = "res_amo.rds")
+
+res_amo$pars1$n25
