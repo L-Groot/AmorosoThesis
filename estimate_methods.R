@@ -223,8 +223,30 @@ plot_methods <- function(dat, res,
                          method_to_plot = NULL,
                          alpha = 1,
                          main = NULL,
+                         mainmain = FALSE,
                          histfill = "grey90",
                          histoutline = "grey80") {
+  # dat = dat
+  # res = res
+  # plot_common_x = TRUE
+  # generatingnormal = c(0,1) #supply (mean,sd)
+  # generatingamoroso = NULL #supply (a,l,c,mu)
+  # generatingexgauss = NULL #supply (mu,sigma,nu)
+  # xticks = NULL
+  # yticks = NULL
+  # ymax = NULL
+  # xmin = NULL
+  # xmax = NULL
+  # bins = 30
+  # cex_main = 12
+  # cex_axislab = 10
+  # cex_axistick = 10
+  # method_to_plot = NULL
+  # alpha = 1
+  # main = NULL
+  # mainmain = FALSE
+  # histfill = "grey90"
+  # histoutline = "grey80"
   
   modlist_all <- res$modlist
   modlist_valid <- res$modlist_valid
@@ -330,12 +352,39 @@ plot_methods <- function(dat, res,
     plot_list <- list()
     
     for (meth in names(valid_titles)) {
+      
       method_data <- df_plot %>% filter(method == meth)
       color <- unique(method_data$color)
       
       p <- ggplot() +
         geom_histogram(data = hist_data, aes(x = x, y = ..density..),
-                       bins = bins, fill = "grey90", color = "grey80", alpha = 0.5) +
+                       bins = bins, fill = "grey90", color = "grey80", alpha = 0.5)
+      
+      if (!is.null(generatingnormal)) {
+        p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                               y = dnorm(seq(xmin_plot, xmax_plot, length.out = 100),
+                                         mean = generatingnormal[1], 
+                                         sd = generatingnormal[2])), 
+                           color = "grey60", linetype = "dashed", size = 0.7)
+      }
+      
+      if (!is.null(generatingamoroso)) {
+        p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                               y = dgg4(seq(xmin_plot, xmax_plot, length.out = 100),
+                                        generatingamoroso[1], generatingamoroso[2], 
+                                        generatingamoroso[3], generatingamoroso[4])), 
+                           color = "grey60", linetype = "dashed", size = 0.7)
+      }
+      
+      if (!is.null(generatingexgauss)) {
+        p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                               y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
+                                           generatingexgauss[1], generatingexgauss[2], 
+                                           generatingexgauss[3])), 
+                           color = "grey60", linetype = "dashed", size = 0.7)
+      }
+      
+      p <- p +
         geom_line(data = method_data, aes(x = x, y = y), color = color, size = 0.8, alpha = alpha) +
         labs(title = ifelse(is.null(main), valid_titles[[meth]], main),  
              x = NULL, 
@@ -352,32 +401,57 @@ plot_methods <- function(dat, res,
           panel.background = element_blank(),
           axis.line = element_line(color = "black")
         ) 
-        #coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
+      #coord_cartesian(xlim = c(xmin_plot, xmax_plot), ylim = c(0, ymax))
       
-        if (!is.null(xticks)) {
-          p <- p + scale_x_continuous(limits = c(xmin,xmax),
-                                      breaks = xticks)
-        } else {
-          p <- p + scale_x_continuous(limits = c(xmin,xmax))
-        }
-        
-        if (!is.null(yticks)) {
-          p <- p + scale_y_continuous(limits = c(0,ymax),
-                                      breaks = yticks)
-        } else {
-          p <- p + scale_y_continuous(limits = c(0,ymax))
-        }
-
+      if (!is.null(xticks)) {
+        p <- p + scale_x_continuous(limits = c(xmin,xmax),
+                                    breaks = xticks)
+      } else {
+        p <- p + scale_x_continuous(limits = c(xmin,xmax))
+      }
+      
+      if (!is.null(yticks)) {
+        p <- p + scale_y_continuous(limits = c(0,ymax),
+                                    breaks = yticks)
+      } else {
+        p <- p + scale_y_continuous(limits = c(0,ymax))
+      }
       
       plot_list[[meth]] <- p
+      
     }
     
-    layout_matrix <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 1)
-    grid.arrange(grobs = c(list(nullGrob()), plot_list), layout_matrix = layout_matrix, widths = c(0.2, 1, 1, 1, 1, 1))
-    grid.text("Density", rot = 90, x = unit(0.02, "npc"), 
-              gp = gpar(fontsize = cex_axislab, fontface = "bold", fontfamily = "Times"))
-    
-    
+    # Define the initial layout matrix
+    if (!mainmain) {
+      
+      layout_matrix <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 1)
+      grid.arrange(grobs = c(list(nullGrob()), plot_list), 
+                   layout_matrix = layout_matrix, 
+                   widths = c(0.2, 1, 1, 1, 1, 1))
+      grid.text("Density", rot = 90, x = unit(0.02, "npc"), 
+                gp = gpar(fontsize = cex_axislab, fontface = "bold", fontfamily = "Times"))
+      
+    } else {
+      
+      titleGrob <- textGrob(paste0("n = ", length(hist_data)),
+                            x = unit(0.05, "npc"), just = "left",
+                            gp = gpar(fontsize = 17, fontface = "bold", fontfamily = "Times"))
+      
+      layout_matrix <- matrix(c(1, 1, 1, 1, 1, 1,
+                                2, 3, 4, 5, 6, 7),
+                              nrow = 2, byrow = TRUE)
+      column_widths <- c(0.2, 1, 1, 1, 1, 1)
+      column_heights <- c(0.5,2)
+      grid.arrange(grobs = c(list(titleGrob, nullGrob()), plot_list), 
+                   layout_matrix = layout_matrix, 
+                   widths = column_widths,
+                   heights = column_heights)
+      
+      # Add vertical "Density" label on the left
+      grid.text("Density", rot = 90, x = unit(0.02, "npc"), y = unit(0.4, "npc"),
+                gp = gpar(fontsize = cex_axislab, fontface = "bold", fontfamily = "Times"))
+      
+    }
   }
 }
 
