@@ -78,6 +78,7 @@ make_gif <- function(dat = NULL,
   for (i in 1:num_full_batches) {
     batch_data <- dat[1:(i * batch_size)]  # Take first i*10 observations
     glimpse(batch_data)
+    n <- length(batch_data)
     
     tmp <- tempfile()
     svglite::svglite(tmp, width = svgwidth, height = svgheight)
@@ -88,23 +89,27 @@ make_gif <- function(dat = NULL,
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
-                   generatingnormal = c(pars[1],pars[2]))
+                   generatingnormal = c(pars[1],pars[2]),
+                   mainmain = T)
     } else if (!is.null(generatingamoroso)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
-                   generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]))
+                   generatingamoroso = c(pars[1],pars[2],pars[3],pars[4]),
+                   mainmain = T)
     } else if (!is.null(generatingexgauss)) {
       pars <- generatingexgauss
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
-                   generatingexgauss = c(pars[1],pars[2],pars[3]))
+                   generatingexgauss = c(pars[1],pars[2],pars[3]),
+                   mainmain = T)
     } else {
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
-                   cex_axislab = cex_axislab, cex_axistick = cex_axistick)
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick,
+                   mainmain = T)
     }
     
     dev.off()
