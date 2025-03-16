@@ -7,6 +7,13 @@ set.seed(40)
 dat <- rexGAUS(n,mu=par[1],sigma=par[2],nu=par[3])
 length(dat)
 
+
+# Wiggly mixed normal
+res_mnorm <- densityMclust(dat, plot = TRUE, G =1999)
+df$nr_components[i] <- res_mnorm$G
+
+
+# Nr of components in mixed normal and wiggly at increasing sample size
 increments <- seq(10,2000,by=100)
 
 df <- data.frame(n = increments, nr_components = numeric(20))
@@ -20,7 +27,7 @@ for (i in 1:length(increments)) {
   res <- estimate_methods(data)
   plot_some_methods(data, res, method_to_plot = "mnorm", lwd = 1.5, legend = F)
   #readline(prompt = "Press [Enter] to continue to the next iteration...")
-  res_mnorm <- densityMclust(data, plot = TRUE)
+  res_mnorm <- densityMclust(data, plot = TRUE, G =1000)
   df$nr_components[i] <- res_mnorm$G
   #readline(prompt = "Press [Enter] to continue to the next iteration...")
   
