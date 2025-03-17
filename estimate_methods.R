@@ -89,12 +89,26 @@ fit_amoroso_hell_aplus <- function(dat) {
 }
 
 # Function to estimate different density models
-fit_others <- function(dat) {
+fit_others <- function(dat,G=NULL) {
   list(
     rdens = safe_execute(quote(density(dat)), "rdens", dat),
     scKDE_2infplus = safe_execute(quote(scdensity(dat, constraint = "twoInflections+")), "scKDE_2infplus", dat),
     mnorm = {
-      mnorm_fit <- safe_execute(quote(densityMclust(dat, plot = FALSE)), "mnorm", dat)
+      if (is.null(G)) {
+        print("G is NULL, calling densityMclust without G")
+        mnorm_fit <- safe_execute(quote(densityMclust(dat, plot = FALSE)), "mnorm", dat)
+      } else {
+        cat(paste("G is", G, "- calling densityMclust with G =", G, "\n"))
+        mnorm_fit <- safe_execute(substitute(densityMclust(dat, plot = FALSE, G = G), list(G = G)), "mnorm", dat)
+      }
+    # mnorm = {
+    #   if(is.null(G)) {
+    #     print("G is NULL")
+    #     mnorm_fit <- safe_execute(quote(densityMclust(dat, plot = FALSE)), "mnorm", dat)
+    #   } else {
+    #     cat(paste("G is",G))
+    #     mnorm_fit <- safe_execute(quote(densityMclust(dat, plot = FALSE, G=G)), "mnorm", dat)
+    #   }
       if (length(mnorm_fit)>1) {
         mnorm_fit$x <- density(dat)$x  # Use same x as base R density
         mnorm_fit$y <- predict_mnorm(mnorm_fit$x, mnorm_fit, plot = FALSE)
@@ -157,7 +171,7 @@ define_plot_limits <- function(dat, modlist_valid, breaks = 20) {
 # estimate_methods() function
 #-------------------------------------------------------------------------------
 
-estimate_methods <- function(dat) {
+estimate_methods <- function(dat, G=NULL) {
   dat <- clean_data(dat)  # Remove NAs
   n <- length(dat)  # Get sample size
   
@@ -169,7 +183,9 @@ estimate_methods <- function(dat) {
   amo_hell_pdf <- extract_amoroso(amo, "HELL-PDF")
   
   # Estimate density models
-  other_three_models <- fit_others(dat)
+  other_three_models <- fit_others(dat, G)
+
+  
   
   # Compile model lists
   modlist <- c(other_three_models, list(amo_hell_cdf = amo_hell_cdf, amo_hell_pdf = amo_hell_pdf))
@@ -211,6 +227,7 @@ plot_methods <- function(dat, res,
                          generatingnormal = NULL, #supply (mean,sd)
                          generatingamoroso = NULL, #supply (a,l,c,mu)
                          generatingexgauss = NULL, #supply (mu,sigma,nu)
+                         generatingmnorm = NULL, #supply (p1,mu1,sd1,mu2,sd2)
                          xticks = NULL,
                          yticks = NULL,
                          ymax = NULL,
@@ -320,6 +337,17 @@ plot_methods <- function(dat, res,
                          color = "grey60", linetype = "dashed", size = 0.7)
     }
     
+    if (!is.null(generatingmnorm)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dmixnorm(seq(xmin_plot, xmax_plot, length.out = 100),
+                                          p1 = generatingmnorm[1], 
+                                          mu1 = generatingmnorm[2],
+                                          sd1 = generatingmnorm[3],
+                                          mu2 = generatingmnorm[4],
+                                          sd2 = generatingmnorm[5])),
+                         color = "grey60", linetype = "dashed", size = 0.7)
+    }
+    
     p <- p +
       geom_line(data = method_data, aes(x = x, y = y), color = color, size = 0.8, alpha = alpha) +
       labs(title = ifelse(is.null(main), valid_titles[[method_to_plot]], main),  # Use 'main' if provided
@@ -382,6 +410,17 @@ plot_methods <- function(dat, res,
                                y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
                                            generatingexgauss[1], generatingexgauss[2], 
                                            generatingexgauss[3])), 
+                           color = "grey60", linetype = "dashed", size = 0.7)
+      }
+      
+      if (!is.null(generatingmnorm)) {
+        p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                               y = dmixnorm(seq(xmin_plot, xmax_plot, length.out = 100),
+                                            p1 = generatingmnorm[1], 
+                                            mu1 = generatingmnorm[2],
+                                            sd1 = generatingmnorm[3],
+                                            mu2 = generatingmnorm[4],
+                                            sd2 = generatingmnorm[5])),
                            color = "grey60", linetype = "dashed", size = 0.7)
       }
       
@@ -561,6 +600,17 @@ plot_some_methods <- function(dat, res,
                              y = dexGAUS(seq(xmin_plot, xmax_plot, length.out = 100),
                                          generatingexgauss[1], generatingexgauss[2], 
                                          generatingexgauss[3])), 
+                         color = "grey60", linetype = "dashed", size = lwd)
+    }
+    
+    if (!is.null(generatingmnorm)) {
+      p <- p + geom_line(aes(x = seq(xmin_plot, xmax_plot, length.out = 100),
+                             y = dmixnorm(seq(xmin_plot, xmax_plot, length.out = 100),
+                                       p1 = generatingmnorm[1], 
+                                       mu1 = generatingmnorm[2],
+                                       sd1 = generatingmnorm[3],
+                                       mu2 = generatingmnorm[4],
+                                       sd2 = generatingmnorm[5])), 
                          color = "grey60", linetype = "dashed", size = lwd)
     }
     

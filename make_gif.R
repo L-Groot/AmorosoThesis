@@ -55,6 +55,7 @@ make_gif <- function(dat = NULL,
                      generatingnormal = NULL,
                      generatingamoroso = NULL,
                      generatingexgauss = NULL,
+                     generatingmnorm = NULL,
                      main_datagen = "") {
   
   # Create main folder if it doesn't exist
@@ -86,12 +87,12 @@ make_gif <- function(dat = NULL,
     res <- estimate_methods(batch_data)
     
     if (!is.null(generatingnormal)) {
-      pars <- generatingamoroso
+      pars <- generatingnormal
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingnormal = c(pars[1],pars[2]),
-                   mainmain = T)
+                   mainmain = T, main_datagen = main_datagen)
     } else if (!is.null(generatingamoroso)) {
       pars <- generatingamoroso
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
@@ -105,6 +106,13 @@ make_gif <- function(dat = NULL,
                    xmin = xmin, xmax = xmax, cex_main = cex_main,
                    cex_axislab = cex_axislab, cex_axistick = cex_axistick,
                    generatingexgauss = c(pars[1],pars[2],pars[3]),
+                   mainmain = T, main_datagen = main_datagen)
+    } else if (!is.null(generatingmnorm)) {
+      pars <- generatingmnorm
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax, cex_main = cex_main,
+                   cex_axislab = cex_axislab, cex_axistick = cex_axistick,
+                   generatingmnorm = c(pars[1],pars[2],pars[3],pars[4],pars[5]),
                    mainmain = T, main_datagen = main_datagen)
     } else {
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
