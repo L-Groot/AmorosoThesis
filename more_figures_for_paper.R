@@ -1,6 +1,10 @@
 # More figures for paper
 source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
               "heads/main/estimate_methods.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/make_gif.R"))
+source(paste0("https://raw.githubusercontent.com/L-Groot/AmorosoThesis/refs/",
+              "heads/main/mnorm_functions.R"))
 
 library(patchwork)
 
@@ -77,10 +81,10 @@ exGauss_simdat <- rnorm(n, mean = mu, sd = sigma) + rexp(n, rate = 1/tau)
 make_gif(exGauss_simdat, "gif_exgauss_1", max_y = 0.01,
          generatingexgauss = c(mu,sigma,tau),
          xmin = 130, xmax = 530,
-         main_datagen = "Data-generating ex-Gaussian(292,9, 44.3, 37.0)"
-          )
+         batch_size = 25,
+         main_datagen = "Data-generating ex-Gaussian(292,9, 44.3, 37.0), n = 2000")
 
-# Make a second gif for a more skewed ex-Gaussian
+# Make GIF for a more skewed ex-Gaussian
 mu <- 1
 sigma <- 0.1
 tau <- 2
@@ -94,7 +98,78 @@ range(exGauss_simdat)
 make_gif(exGauss_simdat, "gif_exgauss_2", max_y = 0.5,
          generatingexgauss = c(mu,sigma,tau),
          xmin = 0, xmax = 15,
-         main_datagen = "Data-generating ex-Gaussian(1, 0.1, 2)")
+         batch_size = 25,
+         main_datagen = "Data-generating ex-Gaussian(1, 0.1, 2), n = 2000")
+
+# Make GIF to visualize CDF and PDF Amoroso can approximate the normal
+n <- 200
+par_norm <- c(100,15)
+par <- par_norm
+
+set.seed(40)
+dat <- rnorm(n,par[1],par[2])
+
+make_gif(dat, "gif_norm_1", max_y = 0.03,
+         generatingnormal = c(100,15),
+         xmin = 30, xmax = 180,
+         main_datagen = "Data-generating Normal(100, 15), n = 200"
+)
+
+# Make GIF for mixed normal
+n <- 2000
+par_mnorm <- c(0.5,3.7,0.7,6,0.8)
+par <- par_mnorm
+
+set.seed(22)
+dat <- rmixnorm(n, par[1], par[2], par[3], par[4], par[5])
+hist(dat)
+
+#res <- estimate_methods(dat)
+#plot_methods(dat,res)
+
+make_gif(dat, "gif_mnorm_1", max_y = 0.3,
+         generatingmnorm = c(par[1],par[2],par[3],par[4],par[5]),
+         xmin = 0, xmax = 10,
+         batch_size = 25,
+         main_datagen = "Data-generating Mixed Normal(p1=0.5, mu1=3.7, sd1=0.7, mu2=6, sd2=0.8), n = 2000"
+)
+
+
+# Make GIF 2 for mixed normal
+n <- 2000
+par_mnorm1 <- c(0.6, 3, 1.2, 7, 1)
+par <- par_mnorm
+
+set.seed(22)
+dat <- rmixnorm(n, par[1], par[2], par[3], par[4], par[5])
+hist(dat)
+
+make_gif(dat, "gif_mnorm_2", max_y = 0.3,
+         generatingmnorm = c(par[1],par[2],par[3],par[4],par[5]),
+         xmin = 0, xmax = 10,
+         batch_size = 25,
+         main_datagen = "Data-generating Mixed Normal(p1=0.6, mu1=3, sd1=1.2, mu2=7, sd2=1), n = 2000"
+)
+
+
+# Make GIF for Amoroso
+n <- 2000
+par_amo1 <- c(a = 2, l = 0.3, c = 5, mu = 0)
+par <- par_amo1
+set.seed(230)
+dat <- rgg4(n, par[1], par[2], par[3], par[4])
+hist(dat, freq = F)
+
+res <- estimate_methods(dat)
+plot_methods(dat,res)
+
+make_gif(dat, "gif_amo_1", max_y = 0.6,
+         generatingamoroso = c(par[1],par[2],par[3],par[4]),
+         xmin = 0, xmax = 4,
+         batch_size = 25,
+         main_datagen = "Data-generating Amoroso(a=2, l=0.3, c=5, mu=0), n = 2000"
+)
+
 
 
 # Make plots that show how R density vs Amoroso fit the simulated data at diff n
@@ -297,9 +372,63 @@ final_plot_100 <- (fit_rdens + (qq_rdens / pp_rdens) +
 final_plot_100
 
 
-#--------------------------------
-# (3) Unimodal MCMC samples data
-#--------------------------------
+#-------------------------------------------------
+# Appendix D: CDF and PDF Amorosos look alike
+#-------------------------------------------------
+set.seed(77)
+dat <- rnorm(100, plot = 1)
+estimate_amoroso(dat)
+
+#-------------------------------------------------
+# Appendix F: Number of Components in Mixed Normal
+#-------------------------------------------------
+par_exgauss1 <- c(1, 0.1, 2)
+par <- par_exgauss1
+
+n <- 2000
+set.seed(40)
+dat <- rexGAUS(n,mu=par[1],sigma=par[2],nu=par[3])
+length(dat)
+
+res <- estimate_methods(dat, G=1910)
+
+plot_some_methods(dat, res,
+                  generatingexgauss = c(1,0.1,2),
+                  method_to_plot = "mnorm",
+                  lwd=0.5,
+                  legend = FALSE,
+                  bins = 60,
+                  cex_main = 17,
+                  cex_axislab = 14,
+                  cex_axistick = 14,
+                  ymax = 0.9,
+                  xmin = 0,
+                  xmax=20,
+                  xticks = c(0,5,10,15,20),
+                  yticks = c(0,0.8),
+                  main = expression(bold("Mixed Normal with "*bolditalic(G)*"=1910 Components")))
+
+
+# Nr of components in mixed normal and wiggly at increasing sample size
+increments <- seq(10,2000,by=100)
+
+df <- data.frame(n = increments, nr_components = numeric(20))
+
+for (i in 1:length(increments)) {
+  x <- increments[i]
+  print(x)
+  data <- dat[1:x]
+  print(length(data))
+  #res <- estimate_methods(data)
+  #plot_some_methods(data, res, method_to_plot = "mnorm", lwd = 1.5, legend = F)
+  #readline(prompt = "Press [Enter] to continue to the next iteration...")
+  res_mnorm <- densityMclust(data, plot = TRUE)
+  df$nr_components[i] <- res_mnorm$G
+  #readline(prompt = "Press [Enter] to continue to the next iteration...")
+}
+
+print(df)
+
 
 
 
@@ -352,3 +481,6 @@ final_plot_100
 # set.seed(28)
 # data <- rnorm(50)
 # bs_and_adjKDE(data)
+
+
+list.files()

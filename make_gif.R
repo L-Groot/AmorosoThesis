@@ -140,7 +140,7 @@ make_gif <- function(dat = NULL,
     res <- estimate_methods(batch_data)
     
     if (!is.null(generatingnormal)) {
-      pars <- generatingamoroso
+      pars <- generatingnormal
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax,
                    generatingnormal = c(pars[1],pars[2]))
@@ -154,6 +154,11 @@ make_gif <- function(dat = NULL,
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax,
                    generatingexgauss = c(pars[1],pars[2],pars[3]))
+    } else if (!is.null(generatingmnorm)) {
+      pars <- generatingmnorm
+      plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
+                   xmin = xmin, xmax = xmax,
+                   generatingmnorm= c(pars[1],pars[2],pars[3],pars[4],pars[5]))
     } else {
       plot_methods(batch_data, res, ymax = max_y, yticks = c(0,max_y),
                    xmin = xmin, xmax = xmax)
