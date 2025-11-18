@@ -9,7 +9,7 @@
 
 #Packages needed
 require(quadprog)
-
+# HALLO
 #Function to determine the optimal number of weights
 #using the CN criterion
 mOpt.CN <- function(tData, L){
